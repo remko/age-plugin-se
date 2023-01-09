@@ -2,15 +2,26 @@ import CryptoKit
 import Darwin
 import Foundation
 
-func generateKey(outputFile: String? = nil) {
+func generateKey(
+  outputFile: String? = nil, requireBiometry: Bool = true, requirePasscode: Bool = false
+) throws {
+  if !SecureEnclave.isAvailable {
+    throw PluginError.seUnsupported
+  }
   let createdAt = Date().ISO8601Format()
-  let accessControl = SecAccessControlCreateWithFlags(
-    kCFAllocatorDefault,
-    kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-    [.privateKeyUsage, .and, .biometryAny],
-    nil)!
-  let privateKey: SecureEnclave.P256.KeyAgreement.PrivateKey = try! SecureEnclave.P256
-    .KeyAgreement.PrivateKey(accessControl: accessControl)
+  var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
+  if requireBiometry {
+    accessControlFlags.insert(.biometryAny)
+  }
+  if requirePasscode {
+    accessControlFlags.insert(.devicePasscode)
+  }
+  let privateKey: SecureEnclave.P256.KeyAgreement.PrivateKey = try SecureEnclave.P256
+    .KeyAgreement.PrivateKey(
+      accessControl: SecAccessControlCreateWithFlags(
+        kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        accessControlFlags,
+        nil)!)
   let publicKey = privateKey.publicKey.compressedRepresentation
   let recipient = Bech32().encode(hrp: "age1applese", data: publicKey)
   let identity = Bech32().encode(
@@ -26,7 +37,7 @@ func generateKey(outputFile: String? = nil) {
   if let outputFile = outputFile {
     FileManager.default.createFile(
       atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
-      contents: contents.data(using: String.Encoding.utf8),
+      contents: contents.data(using: .utf8),
       attributes: [.posixPermissions: 0o600]
     )
     print("Public key: \(recipient)")
@@ -95,7 +106,7 @@ func runRecipientV1() {
         let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
         let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
           using: SHA256.self, salt: salt,
-          sharedInfo: "piv-p256".data(using: String.Encoding.utf8)!,
+          sharedInfo: "piv-p256".data(using: .utf8)!,
           outputByteCount: 32
         )
         let body = try ChaChaPoly.seal(fileKey, using: wrapKey).combined
@@ -185,7 +196,7 @@ func runIdentityV1() {
         let salt = shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
         let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
           using: SHA256.self, salt: salt,
-          sharedInfo: "piv-p256".data(using: String.Encoding.utf8)!,
+          sharedInfo: "piv-p256".data(using: .utf8)!,
           outputByteCount: 32
         )
         let unwrappedKey = try ChaChaPoly.open(
@@ -247,15 +258,10 @@ struct Stanza {
   }
 
   func writeToStdout() {
-    FileHandle.standardOutput.write("-> ".data(using: String.Encoding.utf8)!)
-    FileHandle.standardOutput.write(type.data(using: String.Encoding.utf8)!)
-    for arg in args {
-      FileHandle.standardOutput.write(" ".data(using: String.Encoding.utf8)!)
-      FileHandle.standardOutput.write(arg.data(using: String.Encoding.utf8)!)
-    }
-    FileHandle.standardOutput.write("\n".data(using: String.Encoding.utf8)!)
+    let parts = ([type] + args).joined(separator: " ")
+    FileHandle.standardOutput.write("-> \(parts)\n".data(using: .utf8)!)
     FileHandle.standardOutput.write(body.base64RawEncodedData)
-    FileHandle.standardOutput.write("\n".data(using: String.Encoding.utf8)!)
+    FileHandle.standardOutput.write(Data([0xa]))
     fflush(stdout)
   }
 }
@@ -264,14 +270,24 @@ extension Stanza {
   init(error type: String, args: [String] = [], message: String) {
     self.type = "error"
     self.args = [type] + args
-    self.body = message.data(using: String.Encoding.utf8)!
+    self.body = message.data(using: .utf8)!
   }
 }
 
-enum PluginError: Error {
+enum PluginError: LocalizedError {
+  case seUnsupported
   case incompleteStanza
   case invalidStanza
   case unknownHRP(String)
+
+  public var errorDescription: String? {
+    switch self {
+    case .seUnsupported: return "Secure Enclave not supported on this device"
+    case .incompleteStanza: return "Incomplete stanza"
+    case .invalidStanza: return "Invalid stanza"
+    case .unknownHRP(let hrp): return "Unknown HRP: \(hrp)"
+    }
+  }
 }
 
 extension P256.KeyAgreement.PublicKey {

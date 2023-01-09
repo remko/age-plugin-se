@@ -1,18 +1,19 @@
 import ArgumentParser
 import CryptoKit
+import Darwin
 import Foundation
 
 @main
-struct AppleSEAgePlugin: ParsableCommand {
+struct AgeAppleSEPlugin: ParsableCommand {
   static var configuration = CommandConfiguration(
     commandName: "age-plugin-applese",
     abstract: "Age plugin for Apple Secure Enclave keys.",
-    version: "1.0.0",
+    version: "0.0.1",
     subcommands: [Keygen.self, Plugin.self],
     defaultSubcommand: Plugin.self)
 }
 
-extension AppleSEAgePlugin {
+extension AgeAppleSEPlugin {
   struct Keygen: ParsableCommand {
     static var configuration = CommandConfiguration(abstract: "Generate a private key")
 
@@ -20,7 +21,11 @@ extension AppleSEAgePlugin {
     var output: String? = nil
 
     mutating func run() {
-      generateKey(outputFile: output)
+      do {
+        try generateKey(outputFile: output)
+      } catch {
+        AgeAppleSEPlugin.exit(withError: error)
+      }
     }
   }
 

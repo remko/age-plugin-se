@@ -3,7 +3,7 @@
 import PackageDescription
 
 let package = Package(
-  name: "AppleSEAgePlugin",
+  name: "AgeAppleSEPlugin",
   platforms: [
     .macOS(.v13)
   ],
@@ -16,10 +16,10 @@ let package = Package(
       dependencies: [
         .product(name: "ArgumentParser", package: "swift-argument-parser")
       ],
-      path: "Sources/AppleSEAgePlugin"
+      path: "Sources/AgeAppleSEPlugin"
     ),
     .testTarget(
-      name: "AppleSEAgePluginTests",
+      name: "AgeAppleSEPluginTests",
       dependencies: ["age-plugin-applese"]),
   ]
 )

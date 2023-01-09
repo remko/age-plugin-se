@@ -18,22 +18,16 @@ extension Data {
   }
 
   var base64RawEncodedData: Data {
-    var s = base64EncodedString(options: [
+    var s = base64EncodedData(options: [
       Base64EncodingOptions.lineLength64Characters, Base64EncodingOptions.endLineWithLineFeed,
     ])
-    if let pi = s.firstIndex(of: "=") {
-      s = String(s[s.startIndex..<pi])
+    if let pi = s.firstIndex(of: Character("=").asciiValue!) {
+      s = Data(s[s.startIndex..<pi])
     }
-    return s.data(using: String.Encoding.utf8)!
+    return s
   }
 
   var base64RawEncodedString: String {
-    var s = base64EncodedString(options: [
-      Base64EncodingOptions.lineLength64Characters, Base64EncodingOptions.endLineWithLineFeed,
-    ])
-    if let pi = s.firstIndex(of: "=") {
-      s = String(s[s.startIndex..<pi])
-    }
-    return s
+    return String(data: base64RawEncodedData, encoding: .utf8)!
   }
 }

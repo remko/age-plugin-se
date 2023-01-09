@@ -1,6 +1,6 @@
 ifeq ($(RELEASE),1)
 SWIFT_BUILD_FLAGS=-c release
-BUILD_DIR=$(PWD)/.build/release
+BUILD_DIR=$(PWD)/.build/apple/Products/Release
 else
 BUILD_DIR=$(PWD)/.build/debug
 endif
@@ -9,6 +9,12 @@ PREFIX ?= /usr/local
 .PHONY: all
 all:
 	swift build $(SWIFT_BUILD_FLAGS)
+
+.PHONY: package
+package:
+	swift build -c release --triple arm64-apple-macosx
+	swift build -c release --triple x86_64-apple-macosx
+	lipo -create -output .build/age-plugin-applese .build/arm64-apple-macosx/release/age-plugin-applese .build/x86_64-apple-macosx/release/age-plugin-applese
 
 .PHONY: test
 test:
