@@ -95,7 +95,7 @@ func runRecipientV1() {
         let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
         let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
           using: SHA256.self, salt: salt,
-          sharedInfo: "age-encryption.org/v1/X25519".data(using: String.Encoding.utf8)!,
+          sharedInfo: "piv-p256".data(using: String.Encoding.utf8)!,
           outputByteCount: 32
         )
         let body = try ChaChaPoly.seal(fileKey, using: wrapKey).combined
@@ -185,7 +185,7 @@ func runIdentityV1() {
         let salt = shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
         let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
           using: SHA256.self, salt: salt,
-          sharedInfo: "age-encryption.org/v1/X25519".data(using: String.Encoding.utf8)!,
+          sharedInfo: "piv-p256".data(using: String.Encoding.utf8)!,
           outputByteCount: 32
         )
         let unwrappedKey = try ChaChaPoly.open(
