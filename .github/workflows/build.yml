@@ -1,0 +1,13 @@
+# FIXME: Doesn't work yet, since we use macOS 13 APIs
+name: Build
+
+on:
+  # push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: make
