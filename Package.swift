@@ -7,15 +7,11 @@ let package = Package(
   platforms: [
     .macOS(.v13)
   ],
-  dependencies: [
-    .package(url: "https://github.com/apple/swift-argument-parser", from: "1.2.0")
-  ],
+  dependencies: [],
   targets: [
     .executableTarget(
       name: "age-plugin-applese",
-      dependencies: [
-        .product(name: "ArgumentParser", package: "swift-argument-parser")
-      ],
+      dependencies: [],
       path: "Sources/AgeAppleSEPlugin"
     ),
     .testTarget(

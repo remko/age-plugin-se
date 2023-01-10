@@ -1,20 +1,23 @@
 import Foundation
 
 extension Data {
-  init?(base64RawEncoded: String) {
-    var data: Data?
-    switch base64RawEncoded.count % 4 {
-    case 2:
-      data = Data(base64Encoded: base64RawEncoded + "==")
-    case 3:
-      data = Data(base64Encoded: base64RawEncoded + "=")
-    default:
-      data = Data(base64Encoded: base64RawEncoded)
-    }
-    if data == nil {
+  init?(base64RawEncoded: String, lineWrapped: Bool = false) {
+    if base64RawEncoded.hasSuffix("=") {
       return nil
     }
-    self = data!
+    var str = base64RawEncoded
+    switch base64RawEncoded.count % 4 {
+    case 2:
+      str += "=="
+    case 3:
+      str += "="
+    default:
+      ()
+    }
+    guard let data = Data(base64Encoded: str) else {
+      return nil
+    }
+    self = data
   }
 
   var base64RawEncodedData: Data {
