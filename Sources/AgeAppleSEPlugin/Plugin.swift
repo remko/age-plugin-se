@@ -242,7 +242,7 @@ class Plugin {
             let unwrappedKey = try crypto.open(sealed: recipientStanza.body, using: wrapKey)
             fileResponses[fileIndex] = Stanza(
               type: "file-key",
-              args: ["\(fileIndex)"],
+              args: [String(fileIndex)],
               body: unwrappedKey
             )
           } catch {
