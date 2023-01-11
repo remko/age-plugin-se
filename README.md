@@ -9,6 +9,9 @@
     $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
     $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 
+## Requirements
+
+To use this plugin, you need a Mac with a Secure Enclave processor and macOS 13 (Ventura). 
 ## Installation
 
 > TODO: Homebrew
@@ -37,3 +40,13 @@ If you get an error about missing tools, make sure Xcode is activated:
     sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 
 Make sure `.build/debug/age-plugin-applese` is in your execution path (or softlinked from a folder in your path), so `age` can find the plugin.
+
+### Tests
+
+To run the unit tests:
+
+    make test
+
+To run a smoke test:
+
+    make smoke-test
