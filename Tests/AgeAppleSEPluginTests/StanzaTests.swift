@@ -9,9 +9,6 @@ final class StanzaTests: XCTestCase {
     stream = MemoryStream()
   }
 
-  override func tearDown() {
-  }
-
   func testReadFrom() throws {
     stream.add(
       input:
@@ -35,6 +32,21 @@ final class StanzaTests: XCTestCase {
         body:
           "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
           .data(using: .utf8)!
+      ), try Stanza.readFrom(stream: stream))
+  }
+
+  func testReadFrom_EmptyBody() throws {
+    stream.add(
+      input:
+        """
+        -> mytype
+
+        """)
+    XCTAssertEqual(
+      Stanza(
+        type: "mytype",
+        args: [],
+        body: Data()
       ), try Stanza.readFrom(stream: stream))
   }
 
@@ -160,6 +172,19 @@ final class StanzaTests: XCTestCase {
       """
       -> mytype
       TG9yZW0gaXBzdW0
+      """, stream.output)
+  }
+
+  func testWriteTo_EmptyBody() throws {
+    Stanza(
+      type: "mytype",
+      args: [],
+      body: Data()
+    ).writeTo(stream: stream)
+    XCTAssertEqual(
+      """
+      -> mytype
+
       """, stream.output)
   }
 }

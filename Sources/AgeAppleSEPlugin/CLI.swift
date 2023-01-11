@@ -1,5 +1,4 @@
 import CryptoKit
-import Darwin
 import Foundation
 
 @main
@@ -11,7 +10,7 @@ struct CLI {
         return
       }
 
-      let plugin = Plugin(stream: StandardIOStream())
+      let plugin = Plugin(crypto: CryptoKitCrypto(), stream: StandardIOStream())
       switch command {
       case .keygen:
         try plugin.generateKey(
@@ -32,7 +31,7 @@ struct CLI {
 }
 
 /// Command-line options parser
-struct Options: LocalizedError {
+struct Options {
   enum Error: LocalizedError {
     case unknownOption(String)
     case missingValue(String)
@@ -111,6 +110,12 @@ struct Options: LocalizedError {
         opts.command = .keygen
       } else if ["--help", "-h"].contains(arg) {
         opts.command = nil
+        printHelp()
+        break
+      } else if ["--version"].contains(arg) {
+        opts.command = nil
+        print(VERSION)
+        break
       } else if [
         "--age-plugin", "-o", "--output", "--access-control",
       ].contains(where: {
@@ -144,9 +149,6 @@ struct Options: LocalizedError {
         throw Error.unknownOption(arg)
       }
       i += 1
-    }
-    if opts.command == nil {
-      printHelp()
     }
     return opts
   }

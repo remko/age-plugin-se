@@ -1,4 +1,4 @@
-> ⚠️ **This plugin is not production-ready yet, but should be usable. Feedback welcome!**
+> ⚠️ **This plugin is not production-ready yet. It should be fully functional, but the recipient and identity format are not finalized yet. Feedback welcome!**
 
 # Age plugin for Apple Secure Enclave
 
@@ -13,7 +13,7 @@
 
 > TODO: Homebrew
 
-To build from source, see the *Building from source* section.
+To build from source, see [Building from source](#building-from-source).
 
 ## Usage
 

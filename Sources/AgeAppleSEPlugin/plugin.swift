@@ -1,16 +1,17 @@
 import CryptoKit
-import Darwin
 import Foundation
 
 class Plugin {
+  var crypto: Crypto
   var stream: Stream
 
-  init(stream: Stream) {
+  init(crypto: Crypto, stream: Stream) {
+    self.crypto = crypto
     self.stream = stream
   }
 
   func generateKey(outputFile: String? = nil, accessControl: KeyAccessControl) throws {
-    if !SecureEnclave.isAvailable {
+    if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
     let createdAt = Date().ISO8601Format()
@@ -24,18 +25,13 @@ class Plugin {
     if accessControl == .biometryOrPasscode {
       accessControlFlags.insert(.userPresence)
     }
-    let privateKey: SecureEnclave.P256.KeyAgreement.PrivateKey = try SecureEnclave.P256
-      .KeyAgreement.PrivateKey(
-        accessControl: SecAccessControlCreateWithFlags(
-          kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-          accessControlFlags,
-          nil)!)
-    let publicKey = privateKey.publicKey.compressedRepresentation
-    let recipient = Bech32().encode(hrp: "age1applese", data: publicKey)
-    let identity = Bech32().encode(
-      hrp: "AGE-PLUGIN-APPLESE-",
-      data: privateKey.dataRepresentation)
-
+    let privateKey = try crypto.SecureEnclavePrivateKey(
+      accessControl: SecAccessControlCreateWithFlags(
+        kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        accessControlFlags,
+        nil)!)
+    let recipient = privateKey.publicKey.ageRecipient
+    let identity = privateKey.ageIdentity
     let accessControlStr: String
     switch accessControl {
     case .none: accessControlStr = "none"
@@ -87,38 +83,30 @@ class Plugin {
     }
 
     // Phase 2
-    var responses: [Stanza] = []
+    var stanzas: [Stanza] = []
+    var errors: [Stanza] = []
     var recipientKeys: [P256.KeyAgreement.PublicKey] = []
     recipients.enumerated().forEach { (index, recipient) in
       do {
-        let id = try Bech32().decode(recipient)
-        if id.hrp != "age1applese" {
-          throw Error.unknownHRP(id.hrp)
-        }
-        recipientKeys.append(try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data))
+        recipientKeys.append(try P256.KeyAgreement.PublicKey(ageRecipient: recipient))
       } catch {
-        responses.append(
-          Stanza(error: "recipient", args: [String(index)], message: "\(error)"))
+        errors.append(
+          Stanza(error: "recipient", args: [String(index)], message: error.localizedDescription))
       }
     }
     identities.enumerated().forEach { (index, identity) in
       do {
-        let id = try Bech32().decode(identity)
-        if id.hrp != "AGE-PLUGIN-APPLESE-" {
-          throw Error.unknownHRP(id.hrp)
-        }
         recipientKeys.append(
-          (try SecureEnclave.P256.KeyAgreement.PrivateKey(dataRepresentation: id.data))
-            .publicKey)
+          (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)).publicKey)
       } catch {
-        responses.append(
-          Stanza(error: "recipient", args: [String(index)], message: "\(error)"))
+        errors.append(
+          Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
       }
     }
     fileKeys.enumerated().forEach { (index, fileKey) in
       for recipientKey in recipientKeys {
         do {
-          let ephemeralSecretKey = P256.KeyAgreement.PrivateKey()
+          let ephemeralSecretKey = crypto.newEphemeralPrivateKey()
           let ephemeralPublicKeyBytes = ephemeralSecretKey.publicKey.compressedRepresentation
           let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(with: recipientKey)
           let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
@@ -127,8 +115,8 @@ class Plugin {
             sharedInfo: "piv-p256".data(using: .utf8)!,
             outputByteCount: 32
           )
-          let body = try ChaChaPoly.seal(fileKey, using: wrapKey).combined
-          responses.append(
+          let body = try crypto.seal(fileKey, using: wrapKey)
+          stanzas.append(
             Stanza(
               type: "recipient-stanza",
               args: [
@@ -139,12 +127,12 @@ class Plugin {
               ], body: body
             ))
         } catch {
-          responses.append(
-            Stanza(error: "internal", args: [], message: "inter"))
+          errors.append(
+            Stanza(error: "internal", args: [], message: error.localizedDescription))
         }
       }
     }
-    for stanza in responses {
+    for stanza in (errors.isEmpty ? stanzas : errors) {
       stanza.writeTo(stream: stream)
       let resp = try! Stanza.readFrom(stream: stream)
       assert(resp.type == "ok")
@@ -171,69 +159,101 @@ class Plugin {
     }
 
     // Phase 2
-    var identityKeys: [SecureEnclave.P256.KeyAgreement.PrivateKey] = []
-    var responses: [Stanza] = []
+    var identityKeys: [SecureEnclavePrivateKey] = []
+    var errors: [Stanza] = []
+
+    // Construct identities
     identities.enumerated().forEach { (index, identity) in
       do {
-        let id = try Bech32().decode(identity)
-        if id.hrp != "AGE-PLUGIN-APPLESE-" {
-          throw Error.unknownHRP(id.hrp)
-        }
         identityKeys.append(
-          (try SecureEnclave.P256.KeyAgreement.PrivateKey(dataRepresentation: id.data)))
+          (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)))
       } catch {
-        responses.append(
-          Stanza(error: "identity", args: [String(index)], message: "\(error)"))
+        errors.append(
+          Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
       }
     }
-    var handledFiles: Set<String> = []
-    recipientStanzas.enumerated().forEach { (index, recipientStanza) in
-      let fileIndex = recipientStanza.args[0]
-      if handledFiles.contains(fileIndex) {
-        return
-      }
-      if recipientStanza.args.count != 4 {
-        return
-      }
-      let type = recipientStanza.args[1]
-      if type != "piv-p256" {
-        return
-      }
-      let tag = recipientStanza.args[2]
-      let share = recipientStanza.args[3]
-      for identity in identityKeys {
-        if identity.publicKey.tag.base64RawEncodedString != tag {
-          continue
-        }
-        do {
-          guard let shareKeyData = Data(base64RawEncoded: share) else {
-            throw Error.invalidStanza
+
+    var fileResponses: [Int: Stanza] = [:]
+    if errors.isEmpty {
+      // Check structural validity
+      recipientStanzas.enumerated().forEach { (index, recipientStanza) in
+        let fileIndex = Int(recipientStanza.args[0])!
+        switch recipientStanza.args[1] {
+        case "piv-p256":
+          if recipientStanza.args.count != 4 {
+            fileResponses[fileIndex] = Stanza(
+              error: "stanza", args: [String(fileIndex)], message: "incorrect argument count")
+            return
           }
-          let shareKey = try P256.KeyAgreement.PublicKey(compressedRepresentation: shareKeyData)
-          let sharedSecret = try identity.sharedSecretFromKeyAgreement(with: shareKey)
-          let salt = shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
-          let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
-            using: SHA256.self, salt: salt,
-            sharedInfo: "piv-p256".data(using: .utf8)!,
-            outputByteCount: 32
-          )
-          let unwrappedKey = try ChaChaPoly.open(
-            ChaChaPoly.SealedBox(combined: recipientStanza.body), using: wrapKey
-          )
-          responses.append(
-            Stanza(
+          let tag = Data(base64RawEncoded: recipientStanza.args[2])
+          if tag == nil || tag!.count != 4 {
+            fileResponses[fileIndex] = Stanza(
+              error: "stanza", args: [String(fileIndex)], message: "invalid tag")
+            return
+          }
+          let share = Data(base64RawEncoded: recipientStanza.args[3])
+          if share == nil || share!.count != 33 {
+            fileResponses[fileIndex] = Stanza(
+              error: "stanza", args: [String(fileIndex)], message: "invalid share")
+            return
+          }
+          if recipientStanza.body.count != 32 {
+            fileResponses[fileIndex] = Stanza(
+              error: "stanza", args: [String(fileIndex)],
+              message: "invalid body")
+            return
+          }
+
+        default:
+          return
+        }
+      }
+
+      // Unwrap keys
+      recipientStanzas.enumerated().forEach { (index, recipientStanza) in
+        let fileIndex = Int(recipientStanza.args[0])!
+        if fileResponses[fileIndex] != nil {
+          return
+        }
+        let type = recipientStanza.args[1]
+        if type != "piv-p256" {
+          return
+        }
+        let tag = recipientStanza.args[2]
+        let share = recipientStanza.args[3]
+        for identity in identityKeys {
+          if identity.publicKey.tag.base64RawEncodedString != tag {
+            continue
+          }
+          do {
+            guard let shareKeyData = Data(base64RawEncoded: share) else {
+              throw Error.invalidStanza
+            }
+            let shareKey = try P256.KeyAgreement.PublicKey(compressedRepresentation: shareKeyData)
+            let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(
+              with: shareKey)
+            let salt =
+              shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
+            let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
+              using: SHA256.self, salt: salt,
+              sharedInfo: "piv-p256".data(using: .utf8)!,
+              outputByteCount: 32
+            )
+            let unwrappedKey = try crypto.open(sealed: recipientStanza.body, using: wrapKey)
+            fileResponses[fileIndex] = Stanza(
               type: "file-key",
-              args: [fileIndex],
+              args: ["\(fileIndex)"],
               body: unwrappedKey
-            ))
-          handledFiles.insert(fileIndex)
-        } catch {
-          // continue
+            )
+          } catch {
+            // continue
+          }
         }
       }
     }
 
-    for stanza in responses {
+    let responses = fileResponses.keys.sorted().map({ k in fileResponses[k]! })
+    for stanza in (errors.isEmpty ? responses : errors) {
       stanza.writeTo(stream: stream)
       let resp = try! Stanza.readFrom(stream: stream)
       assert(resp.type == "ok")
@@ -250,9 +270,9 @@ class Plugin {
     public var errorDescription: String? {
       switch self {
       case .seUnsupported: return "Secure Enclave not supported on this device"
-      case .incompleteStanza: return "Incomplete stanza"
-      case .invalidStanza: return "Invalid stanza"
-      case .unknownHRP(let hrp): return "Unknown HRP: \(hrp)"
+      case .incompleteStanza: return "incomplete stanza"
+      case .invalidStanza: return "invalid stanza"
+      case .unknownHRP(let hrp): return "unknown HRP: \(hrp)"
       }
     }
   }
@@ -318,7 +338,37 @@ enum KeyAccessControl: String {
 }
 
 extension P256.KeyAgreement.PublicKey {
+  init(ageRecipient: String) throws {
+    let id = try Bech32().decode(ageRecipient)
+    if id.hrp != "age1applese" {
+      throw Plugin.Error.unknownHRP(id.hrp)
+    }
+    self = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
+  }
+
   var tag: Data {
     return Data(SHA256.hash(data: compressedRepresentation).prefix(4))
   }
+
+  var ageRecipient: String {
+    return Bech32().encode(hrp: "age1applese", data: self.compressedRepresentation)
+  }
+}
+
+extension SecureEnclavePrivateKey {
+  var ageIdentity: String {
+    return Bech32().encode(
+      hrp: "AGE-PLUGIN-APPLESE-",
+      data: self.dataRepresentation)
+  }
+}
+
+func newSecureEnclavePrivateKey(ageIdentity: String, crypto: Crypto) throws
+  -> SecureEnclavePrivateKey
+{
+  let id = try Bech32().decode(ageIdentity)
+  if id.hrp != "AGE-PLUGIN-APPLESE-" {
+    throw Plugin.Error.unknownHRP(id.hrp)
+  }
+  return try crypto.SecureEnclavePrivateKey(dataRepresentation: id.data)
 }
