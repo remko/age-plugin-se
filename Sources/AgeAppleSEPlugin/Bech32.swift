@@ -1,5 +1,5 @@
 // Spec: https://github.com/bitcoin/bips/blob/master/bip-0173.mediawiki
-// Modified version of https://github.com/0xDEADP00L/Bech32/blob/master/LICENSE
+// Modified version of https://github.com/0xDEADP00L/Bech32
 
 // Copyright 2018 Evolution Group Limited
 
