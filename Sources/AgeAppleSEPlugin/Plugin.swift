@@ -244,7 +244,8 @@ class Plugin {
             guard let shareKeyData = Data(base64RawEncoded: share) else {
               throw Error.invalidStanza
             }
-            let shareKey = try P256.KeyAgreement.PublicKey(compressedRepresentation: shareKeyData)
+            let shareKey: P256.KeyAgreement.PublicKey = try P256.KeyAgreement.PublicKey(
+              compressedRepresentation: shareKeyData)
             let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(
               with: shareKey)
             let salt =

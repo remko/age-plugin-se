@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import LocalAuthentication
 
 /// Abstraction for random/unpredictable/system-specific crypto operations
 protocol Crypto {
@@ -19,16 +20,20 @@ protocol SecureEnclavePrivateKey {
 }
 
 class CryptoKitCrypto: Crypto {
+  let context = LAContext()
+
   var isSecureEnclaveAvailable: Bool {
     return SecureEnclave.isAvailable
   }
 
   func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
-    return try SecureEnclave.P256.KeyAgreement.PrivateKey(dataRepresentation: dataRepresentation)
+    return try SecureEnclave.P256.KeyAgreement.PrivateKey(
+      dataRepresentation: dataRepresentation, authenticationContext: context)
   }
 
   func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey {
-    return try SecureEnclave.P256.KeyAgreement.PrivateKey(accessControl: accessControl)
+    return try SecureEnclave.P256.KeyAgreement.PrivateKey(
+      accessControl: accessControl, authenticationContext: context)
   }
 
   func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {

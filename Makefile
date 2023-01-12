@@ -71,4 +71,4 @@ run-manual-tests:
 
 .PHONY: clean
 clean:
-	-rm -rf .build
+	-rm -rf .build manual-tests
