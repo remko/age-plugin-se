@@ -604,4 +604,42 @@ final class IdentityV1Tests: XCTestCase {
 
       """, stream.output)
   }
+
+  func testFailingCryptoOperations() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+
+    stream.add(
+      input:
+        """
+        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+
+        -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
+
+        -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
+        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
+        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        -> done
+
+        -> ok
+
+        -> ok
+
+        -> ok
+
+        """)
+    crypto.failingOperations = true
+    plugin.runIdentityV1()
+
+    XCTAssertEqual(
+      """
+      -> msg
+      ZHVtbXkgZXJyb3I
+      -> msg
+      ZHVtbXkgZXJyb3I
+      -> done
+
+      """, stream.output)
+  }
+
 }

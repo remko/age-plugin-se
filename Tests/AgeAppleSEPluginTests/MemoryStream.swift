@@ -13,7 +13,7 @@ class MemoryStream: Stream {
   }
 
   func readLine() -> String? {
-    if inputLines.count == 0 {
+    if inputLines.isEmpty {
       return nil
     }
     let result = inputLines[0]

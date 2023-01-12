@@ -61,22 +61,26 @@ struct Options {
 
   enum AccessControl: String {
     case none = "none"
-    case biometry = "biometry"
     case passcode = "passcode"
-    case biometryOrPasscode = "biometry-or-passcode"
-    case biometryAndPasscode = "biometry-and-passcode"
+    case anyBiometry = "any-biometry"
+    case anyBiometryOrPasscode = "any-biometry-or-passcode"
+    case anyBiometryAndPasscode = "any-biometry-and-passcode"
+    case currentBiometry = "current-biometry"
+    case currentBiometryAndPasscode = "current-biometry-and-passcode"
 
     var keyAccessControl: KeyAccessControl {
       switch self {
       case .none: return KeyAccessControl.none
-      case .biometry: return KeyAccessControl.biometry
       case .passcode: return KeyAccessControl.passcode
-      case .biometryOrPasscode: return KeyAccessControl.biometryOrPasscode
-      case .biometryAndPasscode: return KeyAccessControl.biometryAndPasscode
+      case .anyBiometry: return KeyAccessControl.anyBiometry
+      case .anyBiometryOrPasscode: return KeyAccessControl.anyBiometryOrPasscode
+      case .anyBiometryAndPasscode: return KeyAccessControl.anyBiometryAndPasscode
+      case .currentBiometry: return KeyAccessControl.currentBiometry
+      case .currentBiometryAndPasscode: return KeyAccessControl.currentBiometryAndPasscode
       }
     }
   }
-  var accessControl = AccessControl.biometryOrPasscode
+  var accessControl = AccessControl.anyBiometryOrPasscode
 
   static func printHelp() {
     print(
@@ -85,11 +89,17 @@ struct Options {
         age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
 
       Options:
-        -o, --output OUTPUT                Write the result to the file at path OUTPUT
-        --access-control ACCESS_CONTROL    Access control for using the generated key.
-                                           Supported values: none, biometry, passcode, 
-                                           biometry-and-passcode, biometry-or-passcode.     
-                                           Default: biometry-or-passcode.                          
+        -o, --output OUTPUT               Write the result to the file at path OUTPUT
+
+        --access-control ACCESS_CONTROL   Access control for using the generated key.
+                                          
+                                          When using current biometry, adding or removing a fingerprint stops the
+                                          key from working. Removing an added fingerprint enables the key again. 
+
+                                          Supported values: none, passcode, 
+                                            any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
+                                            current-biometry, current-biometry-and-passcode
+                                          Default: any-biometry-or-passcode.                          
 
       Example:
         $ age-plugin-applese keygen -o key.txt
@@ -109,12 +119,11 @@ struct Options {
         opts.command = .keygen
       } else if ["--help", "-h"].contains(arg) {
         opts.command = nil
-        printHelp()
         break
       } else if ["--version"].contains(arg) {
         opts.command = nil
         print(VERSION)
-        break
+        return opts
       } else if [
         "--age-plugin", "-o", "--output", "--access-control",
       ].contains(where: {
@@ -148,6 +157,9 @@ struct Options {
         throw Error.unknownOption(arg)
       }
       i += 1
+    }
+    if opts.command == nil {
+      printHelp()
     }
     return opts
   }

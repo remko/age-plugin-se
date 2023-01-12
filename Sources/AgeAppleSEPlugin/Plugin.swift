@@ -16,29 +16,42 @@ class Plugin {
     }
     let createdAt = Date().ISO8601Format()
     var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
-    if accessControl == .biometry || accessControl == .biometryAndPasscode {
+    if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
       accessControlFlags.insert(.biometryAny)
     }
-    if accessControl == .passcode || accessControl == .biometryAndPasscode {
+    if accessControl == .currentBiometry || accessControl == .currentBiometryAndPasscode {
+      accessControlFlags.insert(.biometryCurrentSet)
+    }
+    if accessControl == .passcode || accessControl == .anyBiometryAndPasscode
+      || accessControl == .currentBiometryAndPasscode
+    {
       accessControlFlags.insert(.devicePasscode)
     }
-    if accessControl == .biometryOrPasscode {
+    if accessControl == .anyBiometryOrPasscode {
       accessControlFlags.insert(.userPresence)
     }
-    let privateKey = try crypto.SecureEnclavePrivateKey(
-      accessControl: SecAccessControlCreateWithFlags(
+    var error: Unmanaged<CFError>?
+    guard
+      let secAccessControl = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
         accessControlFlags,
-        nil)!)
+        &error)
+    else {
+      throw error!.takeRetainedValue() as Swift.Error
+    }
+
+    let privateKey = try crypto.SecureEnclavePrivateKey(accessControl: secAccessControl)
     let recipient = privateKey.publicKey.ageRecipient
     let identity = privateKey.ageIdentity
     let accessControlStr: String
     switch accessControl {
     case .none: accessControlStr = "none"
-    case .biometry: accessControlStr = "biometry"
     case .passcode: accessControlStr = "passcode"
-    case .biometryOrPasscode: accessControlStr = "biometry or passcode"
-    case .biometryAndPasscode: accessControlStr = "biometry and passcode"
+    case .anyBiometry: accessControlStr = "any biometry"
+    case .anyBiometryOrPasscode: accessControlStr = "any biometry or passcode"
+    case .anyBiometryAndPasscode: accessControlStr = "any biometry and passcode"
+    case .currentBiometry: accessControlStr = "current biometry"
+    case .currentBiometryAndPasscode: accessControlStr = "current biometry and passcode"
     }
 
     let contents = """
@@ -246,6 +259,10 @@ class Plugin {
               body: unwrappedKey
             )
           } catch {
+            Stanza(type: "msg", body: error.localizedDescription.data(using: .utf8)!).writeTo(
+              stream: stream)
+            let resp = try! Stanza.readFrom(stream: stream)
+            assert(resp.type == "ok")
             // continue
           }
         }
@@ -329,12 +346,14 @@ extension Stanza {
   }
 }
 
-enum KeyAccessControl: String {
-  case none = "none"
-  case biometry = "biometry"
-  case passcode = "passcode"
-  case biometryOrPasscode = "biometry-or-passcode"
-  case biometryAndPasscode = "biometry-and-passcode"
+enum KeyAccessControl {
+  case none
+  case passcode
+  case anyBiometry
+  case anyBiometryOrPasscode
+  case anyBiometryAndPasscode
+  case currentBiometry
+  case currentBiometryAndPasscode
 }
 
 extension P256.KeyAgreement.PublicKey {
