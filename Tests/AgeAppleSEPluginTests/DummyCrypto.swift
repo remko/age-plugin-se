@@ -23,37 +23,22 @@ class DummyCrypto: Crypto {
 
   func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
     return DummySecureEnclavePrivateKey(
-      key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dataRepresentation))
+      key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dataRepresentation), crypto: self)
   }
 
   func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey {
     return DummySecureEnclavePrivateKey(
-      key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dummyKeys.popLast()!))
+      key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dummyKeys.popLast()!), crypto: self)
   }
 
   func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
     return try! P256.KeyAgreement.PrivateKey(rawRepresentation: dummyKeys.popLast()!)
   }
-
-  func seal(_ plaintext: Data, using key: SymmetricKey) throws -> Data {
-    if failingOperations {
-      throw DummyCryptoError.dummyError
-    }
-    return key.withUnsafeBytes { ptr in
-      return plaintext + Data(ptr[0..<16])
-    }
-  }
-
-  func open(sealed ciphertext: Data, using key: SymmetricKey) throws -> Data {
-    if failingOperations {
-      throw DummyCryptoError.dummyError
-    }
-    return Data(ciphertext[0..<16])
-  }
 }
 
 struct DummySecureEnclavePrivateKey: SecureEnclavePrivateKey {
   var key: P256.KeyAgreement.PrivateKey
+  var crypto: DummyCrypto
 
   var publicKey: P256.KeyAgreement.PublicKey {
     return key.publicKey
@@ -66,6 +51,9 @@ struct DummySecureEnclavePrivateKey: SecureEnclavePrivateKey {
   func sharedSecretFromKeyAgreement(with publicKeyShare: P256.KeyAgreement.PublicKey) throws
     -> SharedSecret
   {
+    if crypto.failingOperations {
+      throw DummyCryptoError.dummyError
+    }
     return try key.sharedSecretFromKeyAgreement(with: publicKeyShare)
   }
 }

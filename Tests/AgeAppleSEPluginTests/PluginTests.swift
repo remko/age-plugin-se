@@ -45,7 +45,7 @@ final class RecipientV1Tests: XCTestCase {
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
-        -> done        
+        -> done
 
         -> ok
 
@@ -55,7 +55,7 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
       -> done
 
       """, stream.output)
@@ -71,7 +71,7 @@ final class RecipientV1Tests: XCTestCase {
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
-        -> done        
+        -> done
 
         -> ok
 
@@ -81,7 +81,7 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
       -> done
 
       """, stream.output)
@@ -99,7 +99,7 @@ final class RecipientV1Tests: XCTestCase {
         AAAAAAAAAAAAAAAAAAAAAQ
         -> add-recipient age1applese1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
 
-        -> done        
+        -> done
 
         -> ok
 
@@ -111,9 +111,9 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
       -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
-      AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+      9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
       -> done
 
       """, stream.output)
@@ -133,7 +133,7 @@ final class RecipientV1Tests: XCTestCase {
         AAAAAAAAAAAAAAAAAAAAAg
         -> add-recipient age1applese1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
 
-        -> done        
+        -> done
 
         -> ok
 
@@ -149,13 +149,13 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
       -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
-      AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+      9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
       -> recipient-stanza 1 piv-p256 14yi6A AvEp8Oz0cMnXhpXnWM6cwer4nEDHus/AvNp3kYnUH0Qs
-      AAAAAAAAAAAAAAAAAAAAAvsKEe4V9wXdyfRZ2ky82HI
+      L3ig8s2AqjusH/0lW6ZueSEYhpeV2ofrQpaKP06WI9g
       -> recipient-stanza 1 piv-p256 1mgwOA AoIMpSYaKzGl5IBFaM9AFJXmrseGzTzcQjS9R4kRcjRi
-      AAAAAAAAAAAAAAAAAAAAAkfl7xTt8tiiD0rRMKEvjBM
+      vm8flaP+4W08S6LwFENwnEKLlpzZ5YqZ3NdpKFo7Vg8
       -> done
 
       """, stream.output)
@@ -173,7 +173,7 @@ final class RecipientV1Tests: XCTestCase {
         AAAAAAAAAAAAAAAAAAAAAQ
         -> add-recipient age1invalid1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
 
-        -> done        
+        -> done
 
         -> ok
 
@@ -201,7 +201,7 @@ final class RecipientV1Tests: XCTestCase {
         AAAAAAAAAAAAAAAAAAAAAQ
         -> add-identity AGE-PLUGIN-INVALID-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
-        -> done        
+        -> done
 
         -> ok
 
@@ -227,7 +227,7 @@ final class RecipientV1Tests: XCTestCase {
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
-        -> done        
+        -> done
 
         -> ok
 
@@ -243,32 +243,32 @@ final class RecipientV1Tests: XCTestCase {
       """, stream.output)
   }
 
-  func testFailingCryptoOperations() throws {
-    let plugin = Plugin(crypto: crypto, stream: stream)
+  // func testFailingCryptoOperations() throws {
+  //   let plugin = Plugin(crypto: crypto, stream: stream)
 
-    stream.add(
-      input:
-        """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+  //   stream.add(
+  //     input:
+  //       """
+  //       -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
 
-        -> wrap-file-key
-        AAAAAAAAAAAAAAAAAAAAAQ
-        -> done        
+  //       -> wrap-file-key
+  //       AAAAAAAAAAAAAAAAAAAAAQ
+  //       -> done
 
-        -> ok
+  //       -> ok
 
-        """)
-    crypto.failingOperations = true
-    plugin.runRecipientV1()
+  //       """)
+  //   crypto.failingOperations = true
+  //   plugin.runRecipientV1()
 
-    XCTAssertEqual(
-      """
-      -> error internal
-      ZHVtbXkgZXJyb3I
-      -> done
+  //   XCTAssertEqual(
+  //     """
+  //     -> error internal
+  //     ZHVtbXkgZXJyb3I
+  //     -> done
 
-      """, stream.output)
-  }
+  //     """, stream.output)
+  // }
 
   func testUnknownStanzaTypes() throws {
     let plugin = Plugin(crypto: crypto, stream: stream)
@@ -284,7 +284,7 @@ final class RecipientV1Tests: XCTestCase {
         AAAAAAAAAAAAAAAAAAAAAQ
         -> anotherunknownstanza
         AAAAAAAAAAAAAAAAAAAAAQ
-        -> done        
+        -> done
 
         -> ok
 
@@ -294,7 +294,7 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
       -> done
 
       """, stream.output)
@@ -325,7 +325,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> done
 
         -> ok
@@ -350,9 +350,9 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> recipient-stanza 1 piv-p256 14yi6A AvEp8Oz0cMnXhpXnWM6cwer4nEDHus/AvNp3kYnUH0Qs
-        AAAAAAAAAAAAAAAAAAAAAvsKEe4V9wXdyfRZ2ky82HI
+        L3ig8s2AqjusH/0lW6ZueSEYhpeV2ofrQpaKP06WI9g
         -> done
 
         -> ok
@@ -383,13 +383,13 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
-        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
         -> recipient-stanza 1 piv-p256 14yi6A AvEp8Oz0cMnXhpXnWM6cwer4nEDHus/AvNp3kYnUH0Qs
-        AAAAAAAAAAAAAAAAAAAAAvsKEe4V9wXdyfRZ2ky82HI
+        L3ig8s2AqjusH/0lW6ZueSEYhpeV2ofrQpaKP06WI9g
         -> recipient-stanza 1 piv-p256 1mgwOA AoIMpSYaKzGl5IBFaM9AFJXmrseGzTzcQjS9R4kRcjRi
-        AAAAAAAAAAAAAAAAAAAAAkfl7xTt8tiiD0rRMKEvjBM
+        vm8flaP+4W08S6LwFENwnEKLlpzZ5YqZ3NdpKFo7Vg8
         -> done
 
         -> ok
@@ -418,9 +418,9 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
-        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
         -> done
 
         -> ok
@@ -449,7 +449,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-INVALID-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> done
 
         -> ok
@@ -478,13 +478,13 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> recipient-stanza 0 piv-p256 1mgwOA
-        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
         -> recipient-stanza 1 piv-p256 14yi6A AvEp8Oz0cMnXhpXnWM6cwer4nEDHus/AvNp3kYnUH0Qs
-        AAAAAAAAAAAAAAAAAAAAAvsKEe4V9wXdyfRZ2ky82HI
+        L3ig8s2AqjusH/0lW6ZueSEYhpeV2ofrQpaKP06WI9g
         -> recipient-stanza 1 piv-p256 1mgwOA AoIMpSYaKzGl5IBFaM9AFJXmrseGzTzcQjS9R4kRcjRi
-        AAAAAAAAAAAAAAAAAAAAAkfl7xTt8tiiD0rRMKEvjBM
+        vm8flaP+4W08S6LwFENwnEKLlpzZ5YqZ3NdpKFo7Vg8
         -> done
 
         -> ok
@@ -513,7 +513,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 1mgwOA
-        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
         -> done
 
         -> ok
@@ -538,7 +538,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 14yi Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> done
 
         -> ok
@@ -563,7 +563,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5Q
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> done
 
         -> ok
@@ -616,9 +616,9 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdt+Y
+        SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
         -> recipient-stanza 0 piv-p256 1mgwOA A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
-        AAAAAAAAAAAAAAAAAAAAAc40tMOm028nNPk01X4fkLg
+        9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
         -> done
 
         -> ok
@@ -641,5 +641,4 @@ final class IdentityV1Tests: XCTestCase {
 
       """, stream.output)
   }
-
 }

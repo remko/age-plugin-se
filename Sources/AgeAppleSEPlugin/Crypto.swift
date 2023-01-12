@@ -8,8 +8,6 @@ protocol Crypto {
   func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey
   func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
   func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey
-  func seal(_: Data, using: SymmetricKey) throws -> Data
-  func open(sealed ciphertext: Data, using key: SymmetricKey) throws -> Data
 }
 
 protocol SecureEnclavePrivateKey {
@@ -21,12 +19,6 @@ protocol SecureEnclavePrivateKey {
 }
 
 class CryptoKitCrypto: Crypto {
-  let nullNonce: ChaChaPoly.Nonce
-
-  init() {
-    nullNonce = try! ChaChaPoly.Nonce(data: Data([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
-  }
-
   var isSecureEnclaveAvailable: Bool {
     return SecureEnclave.isAvailable
   }
@@ -41,15 +33,6 @@ class CryptoKitCrypto: Crypto {
 
   func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
     return P256.KeyAgreement.PrivateKey()
-  }
-
-  func seal(_ plaintext: Data, using key: SymmetricKey) throws -> Data {
-    let box = try ChaChaPoly.seal(plaintext, using: key, nonce: nullNonce)
-    return box.ciphertext + box.tag
-  }
-
-  func open(sealed box: Data, using key: SymmetricKey) throws -> Data {
-    return try ChaChaPoly.open(ChaChaPoly.SealedBox(combined: nullNonce + box), using: key)
   }
 }
 

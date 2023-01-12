@@ -2,10 +2,12 @@ import CryptoKit
 import Foundation
 
 class Plugin {
+  let nullNonce: ChaChaPoly.Nonce
   var crypto: Crypto
   var stream: Stream
 
   init(crypto: Crypto, stream: Stream) {
+    nullNonce = try! ChaChaPoly.Nonce(data: Data([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]))
     self.crypto = crypto
     self.stream = stream
   }
@@ -128,7 +130,7 @@ class Plugin {
             sharedInfo: "piv-p256".data(using: .utf8)!,
             outputByteCount: 32
           )
-          let body = try crypto.seal(fileKey, using: wrapKey)
+          let sealedBox = try ChaChaPoly.seal(fileKey, using: wrapKey, nonce: nullNonce)
           stanzas.append(
             Stanza(
               type: "recipient-stanza",
@@ -137,7 +139,7 @@ class Plugin {
                 "piv-p256",
                 recipientKey.tag.base64RawEncodedString,
                 ephemeralPublicKeyBytes.base64RawEncodedString,
-              ], body: body
+              ], body: sealedBox.ciphertext + sealedBox.tag
             ))
         } catch {
           errors.append(
@@ -252,7 +254,8 @@ class Plugin {
               sharedInfo: "piv-p256".data(using: .utf8)!,
               outputByteCount: 32
             )
-            let unwrappedKey = try crypto.open(sealed: recipientStanza.body, using: wrapKey)
+            let unwrappedKey = try ChaChaPoly.open(
+              ChaChaPoly.SealedBox(combined: nullNonce + recipientStanza.body), using: wrapKey)
             fileResponses[fileIndex] = Stanza(
               type: "file-key",
               args: [String(fileIndex)],
