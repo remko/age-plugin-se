@@ -1,5 +1,5 @@
 ifeq ($(RELEASE),1)
-SWIFT_BUILD_FLAGS=-c release
+SWIFT_BUILD_FLAGS=-c release --disable-sandbox
 BUILD_DIR=$(PWD)/.build/release
 else
 BUILD_DIR=$(PWD)/.build/debug
@@ -18,6 +18,7 @@ else
 # bsd-tar corrupts files on GitHub: https://github.com/actions/virtual-environments/issues/2619
 TAR := gtar
 endif
+AGE ?= age
 
 .PHONY: all
 all:
@@ -46,8 +47,8 @@ install:
 smoke-test:
 	PATH="$(BUILD_DIR):$$PATH" && \
 		recipient=`age-plugin-applese keygen --access-control=any-biometry-or-passcode -o key.txt | sed -e "s/Public key: //"` && \
-		age --encrypt --recipient $$recipient -o README.md.age README.md  && \
-		age --decrypt -i key.txt README.md.age && \
+		$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md  && \
+		$(AGE) --decrypt -i key.txt README.md.age && \
 		rm -f key.txt README.md.age
 
 .PHONY: gen-manual-tests
