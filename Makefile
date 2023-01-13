@@ -29,7 +29,7 @@ package:
 	swift build -c release --triple arm64-apple-macosx
 	swift build -c release --triple x86_64-apple-macosx
 	lipo -create -output .build/age-plugin-applese .build/arm64-apple-macosx/release/age-plugin-applese .build/x86_64-apple-macosx/release/age-plugin-applese
-	$(TAR) czf .build/age-plugin-applese-v$(VERSION).tgz .build/age-plugin-applese
+	cd .build && $(TAR) czf age-plugin-applese-v$(VERSION)-macos.tgz age-plugin-applese
 
 .PHONY: test
 test:

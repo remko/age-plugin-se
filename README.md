@@ -9,14 +9,30 @@
     $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
     $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 
+
 ## Requirements
 
 To use this plugin, you need a Mac with a Secure Enclave processor and macOS 13 (Ventura). 
+
+
 ## Installation
 
-> TODO: Homebrew
+### Homebrew
 
-To build from source, see [Building from source](#building-from-source).
+> TODO
+
+### Pre-built binary
+
+- Download a binary from [the releases page](https://github.com/remko/age-plugin-applese/releases)
+- Extract the package
+- Trust `age-plugin-applese` once by Control-clicking the file in Finder, choosing *Open*, 
+  and confirming trust
+- Move `age-plugin-applese` to somewhere on your executable path (e.g. `/usr/local/bin`)
+
+### Building from source
+
+See [Building from source](#building-from-source).
+
 
 ## Usage
 
@@ -34,6 +50,7 @@ To build from source, see [Building from source](#building-from-source).
                                           any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
                                           current-biometry, current-biometry-and-passcode
                                         Default: any-biometry-or-passcode.             
+
 
 ## Building from source
 
