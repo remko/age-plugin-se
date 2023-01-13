@@ -9,15 +9,13 @@ PREFIX ?= /usr/local
 ifeq ($(COVERAGE),1)
 SWIFT_TEST_FLAGS=--enable-code-coverage
 endif
+# E.g. AgeAppleSEPluginTests.RecipientV1Tests/testRecipient
+ifneq ($(TEST_ONLY),)
+SWIFT_TEST_FLAGS := $(SWIFT_TEST_FLAGS) --specifier $(TEST_ONLY)
+endif
 
 VERSION ?= $(shell cat Sources/AgeAppleSEPlugin/Version.swift | grep VERSION | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
 
-ifeq (, $(shell which gtar))
-TAR := tar
-else
-# bsd-tar corrupts files on GitHub: https://github.com/actions/virtual-environments/issues/2619
-TAR := gtar
-endif
 AGE ?= age
 
 .PHONY: all
@@ -29,7 +27,7 @@ package:
 	swift build -c release --triple arm64-apple-macosx
 	swift build -c release --triple x86_64-apple-macosx
 	lipo -create -output .build/age-plugin-applese .build/arm64-apple-macosx/release/age-plugin-applese .build/x86_64-apple-macosx/release/age-plugin-applese
-	cd .build && $(TAR) czf age-plugin-applese-v$(VERSION)-macos.tgz age-plugin-applese
+	cd .build && ditto -c -k age-plugin-applese age-plugin-applese-v$(VERSION)-macos.zip
 
 .PHONY: test
 test:
