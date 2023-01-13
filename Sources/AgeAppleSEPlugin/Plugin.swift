@@ -12,11 +12,11 @@ class Plugin {
     self.stream = stream
   }
 
-  func generateKey(outputFile: String? = nil, accessControl: KeyAccessControl) throws {
+  func generateKey(accessControl: KeyAccessControl, now: Date) throws -> (String, String) {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
-    let createdAt = Date().ISO8601Format()
+    let createdAt = now.ISO8601Format()
     var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
     if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
       accessControlFlags.insert(.biometryAny)
@@ -63,16 +63,7 @@ class Plugin {
       \(identity)
       """
 
-    if let outputFile = outputFile {
-      FileManager.default.createFile(
-        atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
-        contents: contents.data(using: .utf8),
-        attributes: [.posixPermissions: 0o600]
-      )
-      print("Public key: \(recipient)")
-    } else {
-      print(contents)
-    }
+    return (contents, recipient)
   }
 
   func runRecipientV1() {
@@ -241,9 +232,7 @@ class Plugin {
             continue
           }
           do {
-            guard let shareKeyData = Data(base64RawEncoded: share) else {
-              throw Error.invalidStanza
-            }
+            let shareKeyData = Data(base64RawEncoded: share)!
             let shareKey: P256.KeyAgreement.PublicKey = try P256.KeyAgreement.PublicKey(
               compressedRepresentation: shareKeyData)
             let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(

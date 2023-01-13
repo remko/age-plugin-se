@@ -4,16 +4,25 @@ import Foundation
 struct CLI {
   static func main() {
     do {
-      let options = try Options.parse()
-      guard let command = options.command else {
-        return
-      }
-
       let plugin = Plugin(crypto: CryptoKitCrypto(), stream: StandardIOStream())
-      switch command {
+      let options = try Options.parse(CommandLine.arguments)
+      switch options.command {
+      case .help:
+        print(Options.help)
+      case .version:
+        print(VERSION)
       case .keygen:
-        try plugin.generateKey(
-          outputFile: options.output, accessControl: options.accessControl.keyAccessControl)
+        let result = try plugin.generateKey(accessControl: options.accessControl.keyAccessControl, now: Date())
+        if let outputFile = options.output {
+          FileManager.default.createFile(
+            atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
+            contents: result.0.data(using: .utf8),
+            attributes: [.posixPermissions: 0o600]
+          )
+          print("Public key: \(result.1)")
+        } else {
+          print(result.0)
+        }
       case .plugin(let sm):
         switch sm {
         case .recipientV1:
@@ -31,7 +40,7 @@ struct CLI {
 
 /// Command-line options parser
 struct Options {
-  enum Error: LocalizedError {
+  enum Error: LocalizedError, Equatable {
     case unknownOption(String)
     case missingValue(String)
     case invalidValue(String, String)
@@ -51,11 +60,13 @@ struct Options {
     case identityV1 = "identity-v1"
   }
 
-  enum Command {
+  enum Command: Equatable {
+    case help
+    case version
     case keygen
     case plugin(StateMachine)
   }
-  var command: Command?
+  var command: Command
 
   var output: String?
 
@@ -82,8 +93,7 @@ struct Options {
   }
   var accessControl = AccessControl.anyBiometryOrPasscode
 
-  static func printHelp() {
-    print(
+  static var help =
       """
       Usage:
         age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
@@ -106,24 +116,21 @@ struct Options {
         Public key: age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
         $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
         $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
-      """)
-  }
+      """
 
-  static func parse() throws -> Options {
-    let args = CommandLine.arguments
-    var opts = Options()
+  static func parse(_ args: [String]) throws -> Options {
+    var opts = Options(command: .help)
     var i = 1
     while i < args.count {
       let arg = args[i]
       if arg == "keygen" {
         opts.command = .keygen
       } else if ["--help", "-h"].contains(arg) {
-        opts.command = nil
+        opts.command = .help
         break
       } else if ["--version"].contains(arg) {
-        opts.command = nil
-        print(VERSION)
-        return opts
+        opts.command = .version
+        break
       } else if [
         "--age-plugin", "-o", "--output", "--access-control",
       ].contains(where: {
@@ -158,19 +165,6 @@ struct Options {
       }
       i += 1
     }
-    if opts.command == nil {
-      printHelp()
-    }
     return opts
-  }
-
-  private static func toBool(argument: String, value: String) throws -> Bool {
-    switch value {
-    case "yes", "true": return true
-    case "no", "false":
-      return false
-    default:
-      throw Error.invalidValue(argument, value)
-    }
   }
 }

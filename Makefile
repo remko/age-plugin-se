@@ -33,9 +33,9 @@ package:
 
 .PHONY: test
 test:
-	swift test
+	swift test $(SWIFT_TEST_FLAGS)
 ifeq ($(COVERAGE),1)
-	echo "codecov file: $$(swift test --show-codecov-path)"
+	llvm-coverage-viewer --json $$(swift test --show-codecov-path) --output .build/coverage.html
 endif
 
 .PHONY: install

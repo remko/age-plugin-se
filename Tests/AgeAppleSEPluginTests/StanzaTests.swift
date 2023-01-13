@@ -104,6 +104,19 @@ final class StanzaTests: XCTestCase {
     }
   }
 
+  func testReadFrom_BodyInvalid() throws {
+    stream.add(
+      input:
+        """
+        -> mystanza
+        _dW50IGluIGN1bHBhIHF1aSBvZmZpY2lhIGRlc2VydW50IG1vbGxpdCBhbmltIGlkIGVzdCBsYWJvcnVtLg
+        """)
+    XCTAssertThrowsError(try Stanza.readFrom(stream: stream)) { error in
+      XCTAssertEqual(error as! Plugin.Error, Plugin.Error.invalidStanza)
+    }
+  }
+
+
   func testReadFrom_BodyIncomplete() throws {
     stream.add(
       input:
@@ -136,6 +149,12 @@ final class StanzaTests: XCTestCase {
         """)
     XCTAssertThrowsError(try Stanza.readFrom(stream: stream)) { error in
       XCTAssertEqual(error as! Plugin.Error, Plugin.Error.invalidStanza)
+    }
+  }
+
+  func testReadFrom_NoInput() throws {
+    XCTAssertThrowsError(try Stanza.readFrom(stream: stream)) { error in
+      XCTAssertEqual(error as! Plugin.Error, Plugin.Error.incompleteStanza)
     }
   }
 

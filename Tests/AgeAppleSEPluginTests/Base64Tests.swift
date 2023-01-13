@@ -27,6 +27,12 @@ final class Base64Tests: XCTestCase {
       Data(base64RawEncoded: "AQIDBAUGBwg="))
   }
 
+  func testDataInit_InvalidBase64() throws {
+    XCTAssertEqual(
+      nil,
+      Data(base64RawEncoded: "A_QIDBAUG"))
+  }
+
   func testDataBase64RawEncodedData() throws {
     XCTAssertEqual(
       "AQIDBAUGBw".data(using: .utf8),
