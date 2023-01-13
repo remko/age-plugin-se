@@ -12,8 +12,9 @@
 
 ## Requirements
 
-To use this plugin, you need a Mac with a Secure Enclave processor and macOS 13 (Ventura). 
-
+This plugin requires macOS 13 (Ventura).
+To generate identity files and decrypt encrypted files, you need a Mac with a Secure Enclave processor.
+For encrypting files, a Secure Enclave processor is not necessary.
 
 ## Installation
 
@@ -43,13 +44,13 @@ See [Building from source](#building-from-source).
       
       --access-control ACCESS_CONTROL   Access control for using the generated key.
                                     
-                                        When using current biometry, adding or removing a fingerprint stops the
-                                        key from working. Removing an added fingerprint enables the key again. 
+              Supported values: none, passcode, 
+                any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
+                current-biometry, current-biometry-and-passcode
+              Default: any-biometry-or-passcode.             
 
-                                        Supported values: none, passcode, 
-                                          any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
-                                          current-biometry, current-biometry-and-passcode
-                                        Default: any-biometry-or-passcode.             
+              When using current biometry, adding or removing a fingerprint stops the
+              key from working. Removing an added fingerprint enables the key again. 
 
 
 ## Building from source
