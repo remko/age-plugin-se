@@ -42,7 +42,7 @@ class Plugin {
       throw error!.takeRetainedValue() as Swift.Error
     }
 
-    let privateKey = try crypto.SecureEnclavePrivateKey(accessControl: secAccessControl)
+    let privateKey = try crypto.newSecureEnclavePrivateKey(accessControl: secAccessControl)
     let recipient = privateKey.publicKey.ageRecipient
     let identity = privateKey.ageIdentity
     let accessControlStr: String
@@ -382,5 +382,5 @@ func newSecureEnclavePrivateKey(ageIdentity: String, crypto: Crypto) throws
   if id.hrp != "AGE-PLUGIN-APPLESE-" {
     throw Plugin.Error.unknownHRP(id.hrp)
   }
-  return try crypto.SecureEnclavePrivateKey(dataRepresentation: id.data)
+  return try crypto.newSecureEnclavePrivateKey(dataRepresentation: id.data)
 }

@@ -4,18 +4,13 @@ import PackageDescription
 
 let package = Package(
   name: "AgeAppleSEPlugin",
-  platforms: [
-    .macOS(.v13)
-  ],
-  dependencies: [],
+  platforms: [.macOS(.v13)],
   targets: [
-    .executableTarget(
-      name: "age-plugin-applese",
-      dependencies: [],
-      path: "Sources/AgeAppleSEPlugin"
-    ),
+    .executableTarget(name: "age-plugin-applese", path: "Sources"),
     .testTarget(
-      name: "AgeAppleSEPluginTests",
-      dependencies: ["age-plugin-applese"]),
+      name: "Tests",
+      dependencies: ["age-plugin-applese"],
+      path: "Tests"
+    ),
   ]
 )

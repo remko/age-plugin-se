@@ -1,4 +1,6 @@
 # FIXME: Doesn't work yet, since we use macOS 13 APIs
+# https://github.com/actions/runner-images/issues/6426
+# https://github.com/github/roadmap/issues/620
 name: Build
 
 on:
@@ -7,7 +9,11 @@ on:
 
 jobs:
   build:
-    runs-on: macos-latest
+    runs-on: macos-13
     steps:
       - uses: actions/checkout@v2
+      - run: brew install age swift-format
       - run: make
+      - run: make test
+      - run: smoke-test-encrypt
+      - run: make lint

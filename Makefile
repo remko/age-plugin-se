@@ -1,22 +1,20 @@
+PREFIX ?= /usr/local
+AGE ?= age
+
 ifeq ($(RELEASE),1)
 SWIFT_BUILD_FLAGS=-c release --disable-sandbox
-BUILD_DIR=$(PWD)/.build/release
-else
-BUILD_DIR=$(PWD)/.build/debug
 endif
-PREFIX ?= /usr/local
 
 ifeq ($(COVERAGE),1)
 SWIFT_TEST_FLAGS=--enable-code-coverage
 endif
-# E.g. AgeAppleSEPluginTests.RecipientV1Tests/testRecipient
-ifneq ($(TEST_ONLY),)
-SWIFT_TEST_FLAGS := $(SWIFT_TEST_FLAGS) --specifier $(TEST_ONLY)
+# E.g. Tests.RecipientV1Tests/testRecipient
+ifneq ($(TEST_FILTER),)
+SWIFT_TEST_FLAGS := $(SWIFT_TEST_FLAGS) --filter $(TEST_FILTER)
 endif
 
-VERSION ?= $(shell cat Sources/AgeAppleSEPlugin/Version.swift | grep VERSION | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
-
-AGE ?= age
+VERSION ?= $(shell cat Sources/CLI.swift | grep '^let version' | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
+BUILD_DIR = $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
 
 .PHONY: all
 all:
@@ -36,6 +34,10 @@ ifeq ($(COVERAGE),1)
 	llvm-coverage-viewer --json $$(swift test --show-codecov-path) --output .build/coverage.html
 endif
 
+.PHONY: lint
+lint:
+	swift-format lint --recursive --strict .
+	
 .PHONY: install
 install:
 	install -d $(PREFIX)/bin
@@ -44,10 +46,23 @@ install:
 .PHONY: smoke-test
 smoke-test:
 	PATH="$(BUILD_DIR):$$PATH" && \
-		recipient=`age-plugin-applese keygen --access-control=any-biometry-or-passcode -o key.txt | sed -e "s/Public key: //"` && \
-		$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md  && \
-		$(AGE) --decrypt -i key.txt README.md.age && \
-		rm -f key.txt README.md.age
+	recipient=`age-plugin-applese keygen --access-control=any-biometry-or-passcode -o key.txt | sed -e "s/Public key: //"` && \
+	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
+	$(AGE) --decrypt -i key.txt README.md.age && \
+	rm -f key.txt README.md.age
+
+.PHONY: smoke-test-noninteractive
+smoke-test-noninteractive:
+	PATH="$(BUILD_DIR):$$PATH" && \
+	recipient=`age-plugin-applese keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
+	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
+	$(AGE) --decrypt -i key.txt README.md.age && \
+	rm -f key.txt README.md.age
+
+.PHONY: smoke-test-encrypt
+smoke-test-encrypt:
+	PATH="$(BUILD_DIR):$$PATH" && \
+	$(AGE) --encrypt --recipient age1applese1qvxkey2trcz70ds5knnrlrx6q59xjedrd65mdmc4zel53ppfdxmjqyg4qzv -o README.md.age README.md
 
 .PHONY: gen-manual-tests
 gen-manual-tests:
@@ -56,7 +71,7 @@ gen-manual-tests:
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode current-biometry any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
 		recipient=`age-plugin-applese keygen --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
-		age --encrypt --recipient $$recipient -o manual-tests/README.md.$$control.age README.md; \
+		$(AGE) --encrypt --recipient $$recipient -o manual-tests/README.md.$$control.age README.md; \
 	done
 
 .PHONY: run-manual-tests
@@ -64,7 +79,7 @@ run-manual-tests:
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
 		echo "Decrypting $$control"; \
-		age --decrypt -i manual-tests/key.$$control.txt manual-tests/README.md.$$control.age; \
+		$(AGE) --decrypt -i manual-tests/key.$$control.txt manual-tests/README.md.$$control.age; \
 		echo -e "\n-----\n"; \
 	done
 

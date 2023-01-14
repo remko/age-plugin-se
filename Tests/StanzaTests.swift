@@ -116,7 +116,6 @@ final class StanzaTests: XCTestCase {
     }
   }
 
-
   func testReadFrom_BodyIncomplete() throws {
     stream.add(
       input:

@@ -6,8 +6,8 @@ import LocalAuthentication
 protocol Crypto {
   var isSecureEnclaveAvailable: Bool { get }
 
-  func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey
-  func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
+  func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey
+  func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
   func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey
 }
 
@@ -26,12 +26,13 @@ class CryptoKitCrypto: Crypto {
     return SecureEnclave.isAvailable
   }
 
-  func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
+  func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
     return try SecureEnclave.P256.KeyAgreement.PrivateKey(
       dataRepresentation: dataRepresentation, authenticationContext: context)
   }
 
-  func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey {
+  func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
+  {
     return try SecureEnclave.P256.KeyAgreement.PrivateKey(
       accessControl: accessControl, authenticationContext: context)
   }

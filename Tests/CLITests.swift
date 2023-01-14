@@ -12,7 +12,7 @@ final class OptionsTests: XCTestCase {
     let options = try Options.parse(["_", "keygen", "--help"])
     XCTAssertEqual(.help, options.command)
   }
-  
+
   func testParse_CommandWithVersion() throws {
     let options = try Options.parse(["_", "keygen", "--version"])
     XCTAssertEqual(.version, options.command)
@@ -42,7 +42,7 @@ final class OptionsTests: XCTestCase {
   }
 
   func testParse_LongOptionWithoutValue() throws {
-    XCTAssertThrowsError(try Options.parse(["_", "keygen", "--output"])) { error in 
+    XCTAssertThrowsError(try Options.parse(["_", "keygen", "--output"])) { error in
       XCTAssertEqual(Options.Error.missingValue("--output"), error as! Options.Error)
     }
   }

@@ -21,12 +21,13 @@ class DummyCrypto: Crypto {
   var isSecureEnclaveAvailable = true
   var failingOperations = false
 
-  func SecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
+  func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
     return DummySecureEnclavePrivateKey(
       key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dataRepresentation), crypto: self)
   }
 
-  func SecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey {
+  func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
+  {
     return DummySecureEnclavePrivateKey(
       key: try P256.KeyAgreement.PrivateKey(rawRepresentation: dummyKeys.popLast()!), crypto: self)
   }

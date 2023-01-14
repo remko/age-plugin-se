@@ -1,5 +1,7 @@
 import Foundation
 
+let version = "v0.0.1"
+
 @main
 struct CLI {
   static func main() {
@@ -10,9 +12,10 @@ struct CLI {
       case .help:
         print(Options.help)
       case .version:
-        print(VERSION)
+        print(version)
       case .keygen:
-        let result = try plugin.generateKey(accessControl: options.accessControl.keyAccessControl, now: Date())
+        let result = try plugin.generateKey(
+          accessControl: options.accessControl.keyAccessControl, now: Date())
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
@@ -94,29 +97,29 @@ struct Options {
   var accessControl = AccessControl.anyBiometryOrPasscode
 
   static var help =
-      """
-      Usage:
-        age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
+    """
+    Usage:
+      age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
 
-      Options:
-        -o, --output OUTPUT               Write the result to the file at path OUTPUT
+    Options:
+      -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
-        --access-control ACCESS_CONTROL   Access control for using the generated key.
-                                          
-                                          When using current biometry, adding or removing a fingerprint stops the
-                                          key from working. Removing an added fingerprint enables the key again. 
+      --access-control ACCESS_CONTROL   Access control for using the generated key.
+                                        
+                                        When using current biometry, adding or removing a fingerprint stops the
+                                        key from working. Removing an added fingerprint enables the key again. 
 
-                                          Supported values: none, passcode, 
-                                            any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
-                                            current-biometry, current-biometry-and-passcode
-                                          Default: any-biometry-or-passcode.                          
+                                        Supported values: none, passcode, 
+                                          any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
+                                          current-biometry, current-biometry-and-passcode
+                                        Default: any-biometry-or-passcode.                          
 
-      Example:
-        $ age-plugin-applese keygen -o key.txt
-        Public key: age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
-        $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
-        $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
-      """
+    Example:
+      $ age-plugin-applese keygen -o key.txt
+      Public key: age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
+      $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
+      $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+    """
 
   static func parse(_ args: [String]) throws -> Options {
     var opts = Options(command: .help)
