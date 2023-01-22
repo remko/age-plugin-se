@@ -15,6 +15,7 @@ endif
 
 VERSION ?= $(shell cat Sources/CLI.swift | grep '^let version' | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
 BUILD_DIR = $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
+PACKAGE_ARCHS = arm64-apple-macosx x86_64-apple-macosx
 
 .PHONY: all
 all:
@@ -22,9 +23,9 @@ all:
 
 .PHONY: package
 package:
-	swift build -c release --triple arm64-apple-macosx
-	swift build -c release --triple x86_64-apple-macosx
-	lipo -create -output .build/age-plugin-se .build/arm64-apple-macosx/release/age-plugin-se .build/x86_64-apple-macosx/release/age-plugin-se
+	for arch in $(PACKAGE_ARCHS); do swift build -c release --triple $$arch; done
+	lipo -create -output .build/age-plugin-se $(foreach arch, $(PACKAGE_ARCHS), \
+		$(shell swift build -c release --triple $(arch) --show-bin-path)/age-plugin-se)
 	cd .build && ditto -c -k age-plugin-se age-plugin-se-v$(VERSION)-macos.zip
 
 .PHONY: test
@@ -49,23 +50,32 @@ install:
 .PHONY: smoke-test
 smoke-test:
 	PATH="$(BUILD_DIR):$$PATH" && \
+	echo '\xf0\x9f\x94\x91 Generating key...' && \
 	recipient=`age-plugin-se keygen --access-control=any-biometry -o key.txt | sed -e "s/Public key: //"` && \
-	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
-	$(AGE) --decrypt -i key.txt README.md.age && \
-	rm -f key.txt README.md.age
+	echo '\xf0\x9f\x94\x92 Encrypting...' && \
+	(echo '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
+	echo '\xf0\x9f\x94\x93 Decrypting...' && \
+	$(AGE) --decrypt -i key.txt secret.txt.age && \
+	rm -f key.txt secret.txt.age
 
 .PHONY: smoke-test-noninteractive
 smoke-test-noninteractive:
 	PATH="$(BUILD_DIR):$$PATH" && \
+	echo '\xf0\x9f\x94\x91 Generating key...' && \
 	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
-	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
-	$(AGE) --decrypt -i key.txt README.md.age && \
-	rm -f key.txt README.md.age
+	echo '\xf0\x9f\x94\x92 Encrypting...' && \
+	(echo '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
+	echo '\xf0\x9f\x94\x93 Decrypting...' && \
+	$(AGE) --decrypt -i key.txt secret.txt.age && \
+	rm -f key.txt secret.txt.age
 
 .PHONY: smoke-test-encrypt
 smoke-test-encrypt:
 	PATH="$(BUILD_DIR):$$PATH" && \
-	$(AGE) --encrypt --recipient age1se1qvxkey2trcz70ds5knnrlrx6q59xjedrd65mdmc4zel53ppfdxmjqyg4qzv -o README.md.age README.md
+	echo '\xf0\x9f\x94\x92 Encrypting...' && \
+	(echo "test" | $(AGE) --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age) && \
+	echo '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' && \
+	rm -f secret.txt.age
 
 .PHONY: gen-manual-tests
 gen-manual-tests:
@@ -74,16 +84,16 @@ gen-manual-tests:
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode current-biometry any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
 		recipient=`age-plugin-se keygen --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
-		$(AGE) --encrypt --recipient $$recipient -o manual-tests/README.md.$$control.age README.md; \
+		(echo '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o manual-tests/secret.txt.$$control.age); \
 	done
 
 .PHONY: run-manual-tests
 run-manual-tests:
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
-		echo "Decrypting $$control"; \
-		$(AGE) --decrypt -i manual-tests/key.$$control.txt manual-tests/README.md.$$control.age; \
-		echo -e "\n-----\n"; \
+		echo "\\xf0\\x9f\\x94\\x93 Decrypting '$$control'..." && \
+		$(AGE) --decrypt -i manual-tests/key.$$control.txt manual-tests/secret.txt.$$control.age; \
+		echo "\n-----\n"; \
 	done
 
 .PHONY: clean
