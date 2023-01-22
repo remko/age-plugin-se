@@ -1,4 +1,4 @@
-@testable import age_plugin_applese
+@testable import age_plugin_se
 
 class MemoryStream: Stream {
   var inputLines: [String] = []

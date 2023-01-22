@@ -1,7 +1,7 @@
 import CryptoKit
 import XCTest
 
-@testable import age_plugin_applese
+@testable import age_plugin_se
 
 final class PluginTests: XCTestCase {
   func testCertificateTag() throws {
@@ -28,11 +28,11 @@ final class GenerateTests: XCTestCase {
       """
       # created: 1997-02-02T02:26:51Z
       # access control: any biometry or passcode
-      # public key: age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu
-      AGE-PLUGIN-APPLESE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6QN63NAW
+      # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
       """, result.0)
     XCTAssertEqual(
-      "age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu", result.1)
+      "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
   }
 
   func testGenerate_AnyBiometryAndPasscode() throws {
@@ -44,11 +44,11 @@ final class GenerateTests: XCTestCase {
       """
       # created: 1997-02-02T02:26:51Z
       # access control: any biometry and passcode
-      # public key: age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu
-      AGE-PLUGIN-APPLESE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6QN63NAW
+      # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
       """, result.0)
     XCTAssertEqual(
-      "age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu", result.1)
+      "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
   }
 
   func testGenerate_CurrentBiometry() throws {
@@ -59,11 +59,11 @@ final class GenerateTests: XCTestCase {
       """
       # created: 1997-02-02T02:26:51Z
       # access control: current biometry
-      # public key: age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu
-      AGE-PLUGIN-APPLESE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6QN63NAW
+      # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
       """, result.0)
     XCTAssertEqual(
-      "age1applese1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k03fanu", result.1)
+      "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
   }
 
   func testGenerate_NoSecureEnclaveSupport() throws {
@@ -79,15 +79,6 @@ final class GenerateTests: XCTestCase {
   }
 }
 
-// Test keys:
-//   crypto.SecureEnclavePrivateKey(dataRepresentation: Data(base64RawEncoded: "OSe+zDK18qF0UrjxYVkmwvxyEdxZHp9F69rElj8bKS8")!)
-//   AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
-//   age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
-//
-//   crypto.SecureEnclavePrivateKey(dataRepresentation: Data(base64RawEncoded: "kBuQrPyfvCqBXJ5G4YBkqNER201niIeOmlXsRS2gxN0")!)
-//   AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
-//   age1applese1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
-
 final class RecipientV1Tests: XCTestCase {
   var stream = MemoryStream()
   var crypto = DummyCrypto()
@@ -95,6 +86,27 @@ final class RecipientV1Tests: XCTestCase {
   override func setUp() {
     stream = MemoryStream()
     crypto = DummyCrypto()
+  }
+
+  // Just a test to get the identities of the test keys used in this test
+  func testKeys() throws {
+    let key1 = try! crypto.newSecureEnclavePrivateKey(
+      dataRepresentation: Data(base64RawEncoded: "OSe+zDK18qF0UrjxYVkmwvxyEdxZHp9F69rElj8bKS8")!)
+    XCTAssertEqual(
+      "AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG",
+      key1.ageIdentity)
+    XCTAssertEqual(
+      "age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l",
+      key1.publicKey.ageRecipient)
+
+    let key2 = try! crypto.newSecureEnclavePrivateKey(
+      dataRepresentation: Data(base64RawEncoded: "kBuQrPyfvCqBXJ5G4YBkqNER201niIeOmlXsRS2gxN0")!)
+    XCTAssertEqual(
+      "AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7",
+      key2.ageIdentity)
+    XCTAssertEqual(
+      "age1se1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj752upj6l",
+      key2.publicKey.ageRecipient)
   }
 
   func testNothing() throws {
@@ -110,7 +122,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+        -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
@@ -136,7 +148,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
@@ -162,11 +174,11 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+        -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
-        -> add-recipient age1applese1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
+        -> add-recipient age1se1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj752upj6l
 
         -> done
 
@@ -194,13 +206,13 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+        -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAg
-        -> add-recipient age1applese1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75hkckfk
+        -> add-recipient age1se1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj752upj6l
 
         -> done
 
@@ -236,7 +248,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+        -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
@@ -264,7 +276,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
@@ -318,7 +330,7 @@ final class RecipientV1Tests: XCTestCase {
   //   stream.add(
   //     input:
   //       """
-  //       -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+  //       -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
   //       -> wrap-file-key
   //       AAAAAAAAAAAAAAAAAAAAAQ
@@ -345,7 +357,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1applese1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw8ajekk
+        -> add-recipient age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
 
         -> unknown-stanza 1 2 3
 
@@ -391,7 +403,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -416,7 +428,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -447,9 +459,9 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
-        -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
+        -> add-identity AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -484,7 +496,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
+        -> add-identity AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -513,7 +525,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 X25519 A1x2nUpw2wo/7z0JR5puskK6NuvW5XkQBwkun/T3WC80
         9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
@@ -540,7 +552,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> add-identity AGE-PLUGIN-INVALID-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
 
@@ -569,7 +581,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> add-identity AGE-SECRET-KEY-1MCFVWZK6PK625PWMWVYPZDQM4N7AS3VA754JHCC60ZT7WJ79TQQSQDYVGF
 
@@ -598,9 +610,9 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
-        -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
+        -> add-identity AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -635,7 +647,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 1mgwOA
         9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y
@@ -660,7 +672,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 14yi Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -685,7 +697,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5Q
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -710,7 +722,7 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         AAAAAAAAAAAAAAAAAAAAARIiJq2e9+1E+xK92Pvdtw
@@ -736,9 +748,9 @@ final class IdentityV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
-        -> add-identity AGE-PLUGIN-APPLESE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWS232YLC
+        -> add-identity AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7
 
         -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
         SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
@@ -774,7 +786,7 @@ final class IdentityV1Tests: XCTestCase {
         """
         -> unknown-stanza-1 a bbb c
 
-        -> add-identity AGE-PLUGIN-APPLESE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHS2FM3SW
+        -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> unknown-stanza-2
         9NGkkBZykDMgw6dndbbjnn7DQBalVV4sVIurWku030Y

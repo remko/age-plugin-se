@@ -1,6 +1,6 @@
 import XCTest
 
-@testable import age_plugin_applese
+@testable import age_plugin_se
 
 final class StanzaTests: XCTestCase {
   var stream = MemoryStream()

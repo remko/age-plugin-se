@@ -352,7 +352,7 @@ enum KeyAccessControl {
 extension P256.KeyAgreement.PublicKey {
   init(ageRecipient: String) throws {
     let id = try Bech32().decode(ageRecipient)
-    if id.hrp != "age1applese" {
+    if id.hrp != "age1se" {
       throw Plugin.Error.unknownHRP(id.hrp)
     }
     self = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
@@ -363,14 +363,14 @@ extension P256.KeyAgreement.PublicKey {
   }
 
   var ageRecipient: String {
-    return Bech32().encode(hrp: "age1applese", data: self.compressedRepresentation)
+    return Bech32().encode(hrp: "age1se", data: self.compressedRepresentation)
   }
 }
 
 extension SecureEnclavePrivateKey {
   var ageIdentity: String {
     return Bech32().encode(
-      hrp: "AGE-PLUGIN-APPLESE-",
+      hrp: "AGE-PLUGIN-SE-",
       data: self.dataRepresentation)
   }
 }
@@ -379,7 +379,7 @@ func newSecureEnclavePrivateKey(ageIdentity: String, crypto: Crypto) throws
   -> SecureEnclavePrivateKey
 {
   let id = try Bech32().decode(ageIdentity)
-  if id.hrp != "AGE-PLUGIN-APPLESE-" {
+  if id.hrp != "AGE-PLUGIN-SE-" {
     throw Plugin.Error.unknownHRP(id.hrp)
   }
   return try crypto.newSecureEnclavePrivateKey(dataRepresentation: id.data)

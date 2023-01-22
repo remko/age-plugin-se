@@ -1,13 +1,17 @@
-> ⚠️ **This plugin is not production-ready yet. It should be fully functional, but the recipient and identity format are not finalized yet. Feedback welcome!**
+> ⚠️ **This plugin is not production-ready yet. It is fully functional and tested, but the recipient and identity format are still subject to change. Feedback welcome!**
 
 # Age plugin for Apple Secure Enclave
 
-`age-plugin-applese` is a plugin for [age](https://age-encryption.org), enabling encryption using [Apple's Secure Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
+`age-plugin-se` is a plugin for [age](https://age-encryption.org), enabling encryption using [Apple's Secure Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
 
-    $ age-plugin-applese keygen --access-control=any-biometry-or-passcode -o key.txt
-    Public key: age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
-    $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
+    $ age-plugin-se keygen --access-control=any-biometry -o key.txt
+    Public key: age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
+    $ tar cvz ~/data | age -r age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
     $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
+</div>
 
 
 ## Requirements
@@ -24,11 +28,11 @@ For encrypting files, a Secure Enclave processor is not necessary.
 
 ### Pre-built binary
 
-- Download a binary from [the releases page](https://github.com/remko/age-plugin-applese/releases)
+- Download a binary from [the releases page](https://github.com/remko/age-plugin-se/releases)
 - Extract the package
-- Trust `age-plugin-applese` once by Control-clicking the file in Finder, choosing *Open*, 
+- Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
   and confirming trust
-- Move `age-plugin-applese` to somewhere on your executable path (e.g. `/usr/local/bin`)
+- Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
 
 ### Building from source
 
@@ -37,7 +41,7 @@ See [Building from source](#building-from-source).
 
 ## Usage
 
-    age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
+    age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
 
     Options:
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
@@ -63,7 +67,7 @@ If you get an error about missing tools, make sure Xcode is activated:
 
     sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
 
-Make sure `.build/debug/age-plugin-applese` is in your execution path (or softlinked from a folder in your path), so `age` can find the plugin.
+Make sure `.build/debug/age-plugin-se` is in your execution path (or softlinked from a folder in your path), so `age` can find the plugin.
 
 ### Tests
 

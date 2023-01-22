@@ -1,7 +1,7 @@
 import CryptoKit
 import Foundation
 
-@testable import age_plugin_applese
+@testable import age_plugin_se
 
 class DummyCrypto: Crypto {
   // If more keys are needed, add them to the front

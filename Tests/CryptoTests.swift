@@ -1,7 +1,7 @@
 import CryptoKit
 import XCTest
 
-@testable import age_plugin_applese
+@testable import age_plugin_se
 
 final class CryptoKitCryptoTests: XCTestCase {
   var crypto = CryptoKitCrypto()

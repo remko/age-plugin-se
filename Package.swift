@@ -3,13 +3,13 @@
 import PackageDescription
 
 let package = Package(
-  name: "AgeAppleSEPlugin",
+  name: "AgeSecureEnclavePlugin",
   platforms: [.macOS(.v13)],
   targets: [
-    .executableTarget(name: "age-plugin-applese", path: "Sources"),
+    .executableTarget(name: "age-plugin-se", path: "Sources"),
     .testTarget(
       name: "Tests",
-      dependencies: ["age-plugin-applese"],
+      dependencies: ["age-plugin-se"],
       path: "Tests"
     ),
   ]

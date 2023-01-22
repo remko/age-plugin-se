@@ -99,7 +99,7 @@ struct Options {
   static var help =
     """
     Usage:
-      age-plugin-applese keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
+      age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
 
     Options:
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
@@ -115,9 +115,9 @@ struct Options {
                                         Default: any-biometry-or-passcode.                          
 
     Example:
-      $ age-plugin-applese keygen -o key.txt
-      Public key: age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
-      $ tar cvz ~/data | age -r age1applese1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
+      $ age-plugin-se keygen -o key.txt
+      Public key: age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
+      $ tar cvz ~/data | age -r age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
       $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
     """
 

@@ -24,8 +24,8 @@ all:
 package:
 	swift build -c release --triple arm64-apple-macosx
 	swift build -c release --triple x86_64-apple-macosx
-	lipo -create -output .build/age-plugin-applese .build/arm64-apple-macosx/release/age-plugin-applese .build/x86_64-apple-macosx/release/age-plugin-applese
-	cd .build && ditto -c -k age-plugin-applese age-plugin-applese-v$(VERSION)-macos.zip
+	lipo -create -output .build/age-plugin-se .build/arm64-apple-macosx/release/age-plugin-se .build/x86_64-apple-macosx/release/age-plugin-se
+	cd .build && ditto -c -k age-plugin-se age-plugin-se-v$(VERSION)-macos.zip
 
 .PHONY: test
 test:
@@ -44,12 +44,12 @@ lint:
 .PHONY: install
 install:
 	install -d $(PREFIX)/bin
-	install $(BUILD_DIR)/age-plugin-applese $(PREFIX)/bin
+	install $(BUILD_DIR)/age-plugin-se $(PREFIX)/bin
 
 .PHONY: smoke-test
 smoke-test:
 	PATH="$(BUILD_DIR):$$PATH" && \
-	recipient=`age-plugin-applese keygen --access-control=any-biometry-or-passcode -o key.txt | sed -e "s/Public key: //"` && \
+	recipient=`age-plugin-se keygen --access-control=any-biometry -o key.txt | sed -e "s/Public key: //"` && \
 	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
 	$(AGE) --decrypt -i key.txt README.md.age && \
 	rm -f key.txt README.md.age
@@ -57,7 +57,7 @@ smoke-test:
 .PHONY: smoke-test-noninteractive
 smoke-test-noninteractive:
 	PATH="$(BUILD_DIR):$$PATH" && \
-	recipient=`age-plugin-applese keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
+	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
 	$(AGE) --encrypt --recipient $$recipient -o README.md.age README.md && \
 	$(AGE) --decrypt -i key.txt README.md.age && \
 	rm -f key.txt README.md.age
@@ -65,7 +65,7 @@ smoke-test-noninteractive:
 .PHONY: smoke-test-encrypt
 smoke-test-encrypt:
 	PATH="$(BUILD_DIR):$$PATH" && \
-	$(AGE) --encrypt --recipient age1applese1qvxkey2trcz70ds5knnrlrx6q59xjedrd65mdmc4zel53ppfdxmjqyg4qzv -o README.md.age README.md
+	$(AGE) --encrypt --recipient age1se1qvxkey2trcz70ds5knnrlrx6q59xjedrd65mdmc4zel53ppfdxmjqyg4qzv -o README.md.age README.md
 
 .PHONY: gen-manual-tests
 gen-manual-tests:
@@ -73,7 +73,7 @@ gen-manual-tests:
 	mkdir -p manual-tests
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode current-biometry any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
-		recipient=`age-plugin-applese keygen --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
+		recipient=`age-plugin-se keygen --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
 		$(AGE) --encrypt --recipient $$recipient -o manual-tests/README.md.$$control.age README.md; \
 	done
 
