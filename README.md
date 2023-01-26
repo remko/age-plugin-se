@@ -1,6 +1,6 @@
 > ⚠️ **This plugin is not production-ready yet. It is fully functional and tested, but the recipient and identity format are still subject to change. Feedback welcome!**
 
-# Age plugin for Apple Secure Enclave
+# Age plugin for Apple's Secure Enclave
 
 `age-plugin-se` is a plugin for [age](https://age-encryption.org), enabling encryption using [Apple's Secure Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
 
@@ -30,15 +30,24 @@ For encrypting files, a Secure Enclave processor is not necessary.
 
 ### Pre-built binary
 
-- Download a binary from [the releases page](https://github.com/remko/age-plugin-se/releases)
-- Extract the package
-- Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
-  and confirming trust
-- Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
+1. Download a binary from [the releases page](https://github.com/remko/age-plugin-se/releases)
+2. Extract the package
+3. Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
+   and confirming trust
+4. Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
 
 ### Building from source
 
-See [Building from source](#building-from-source).
+1. Clone [the source code repository](https://github.com/remko/age-plugin-se) or 
+   get a source package from [the releases page](https://github.com/remko/age-plugin-se/releases)
+
+2. Build the plugin
+      
+       make
+
+3. Install the plugin
+
+       sudo make install PREFIX=/usr/local
 
 
 ## Usage
@@ -59,7 +68,7 @@ See [Building from source](#building-from-source).
             key from working. Removing an added fingerprint enables the key again. 
 
 
-## Building from source
+## Development
 
 Build the plugin
 
