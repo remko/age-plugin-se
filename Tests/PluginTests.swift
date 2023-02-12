@@ -8,6 +8,18 @@ final class PluginTests: XCTestCase {
     let key = try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32))
     XCTAssertEqual("Ujulpw", key.tag.base64RawEncodedString)
   }
+
+  // Test to ensure that age-plugin-yubikey has the same output tag
+  // These values were extracted from a yubikey recipient
+  func testCertificateTag_YubiKeyPlugin() throws {
+    let key = try P256.KeyAgreement.PublicKey(
+      compactRepresentation: Data([
+        182, 32, 36, 98, 119, 204, 123, 231, 20, 203, 102, 119, 81, 232, 194, 196, 140, 194, 55,
+        12, 222, 162, 205, 252, 47, 114, 187, 157, 117, 151, 57, 158,
+      ]))
+    XCTAssertEqual(Data([128, 103, 102, 255]), key.tag)
+    XCTAssertEqual("gGdm/w", key.tag.base64RawEncodedString)
+  }
 }
 
 final class GenerateTests: XCTestCase {
