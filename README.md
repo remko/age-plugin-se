@@ -2,6 +2,8 @@
 
 # Age plugin for Apple's Secure Enclave
 
+[![Build](https://github.com/remko/age-plugin-se/actions/workflows/build.yml/badge.svg)](https://github.com/remko/age-plugin-se/actions/workflows/build.yml)
+
 `age-plugin-se` is a plugin for [age](https://age-encryption.org), enabling encryption using [Apple's Secure Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
 
     $ age-plugin-se keygen --access-control=any-biometry -o key.txt
