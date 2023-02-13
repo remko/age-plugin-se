@@ -1,19 +1,28 @@
-# FIXME: Doesn't work yet, since we use macOS 13 APIs
-# https://github.com/actions/runner-images/issues/6426
-# https://github.com/github/roadmap/issues/620
 name: Build
 
 on:
-  # push:
+  push:
   workflow_dispatch:
 
 jobs:
   build:
-    runs-on: macos-13
+    strategy:
+      matrix:
+        # FIXME: Doesn't work on macOS yet, since we use macOS 13 APIs
+        # https://github.com/actions/runner-images/issues/6426
+        # https://github.com/github/roadmap/issues/620
+        os: [ubuntu-22.04] # macos-13,
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
-      - run: brew install age swift-format
+      - uses: ./.github/actions/setup
       - run: make
+      # Coverage rule doesn't work on Linux yet
+      - run: make test COVERAGE=1
+        if: runner.os == 'macOS'
       - run: make test
+        if: runner.os != 'macOS'
       - run: make smoke-test-encrypt
       - run: make lint
+        # We don't have swift-format on Linux yet
+        if: runner.os == 'macOS'

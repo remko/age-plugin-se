@@ -1,0 +1,34 @@
+name: Publish
+
+on:
+  release:
+    types: [created]
+
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
+  publish-standalone:
+    needs: build
+    strategy:
+      matrix:
+        os: [ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: ./.github/actions/setup
+      - run: make package
+      - name: "Upload artifacts"
+        run: |
+          for f in `find .build -maxdepth 1 -name 'age-plugin-se-*.tgz' -o -name 'age-plugin-se-*.zip'`; do
+            curl --fail \
+              -H "Authorization: token $GITHUB_TOKEN" \
+              -H "Content-Type: $(file -b --mime-type $f)" \
+              --data-binary @$f \
+              "$RELEASE_ASSETS_UPLOAD_URL?name=$(basename $f)"
+          done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_ASSETS_UPLOAD_URL: https://uploads.github.com/repos/${{ github.event.repository.full_name}}/releases/${{ github.event.release.id }}/assets
+        shell: bash
+

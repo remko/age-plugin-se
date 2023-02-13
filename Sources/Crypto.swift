@@ -1,6 +1,12 @@
-import CryptoKit
 import Foundation
-import LocalAuthentication
+
+#if !os(Linux) && !os(Windows)
+  import CryptoKit
+  import LocalAuthentication
+#else
+  import Crypto
+  struct SecAccessControl {}
+#endif
 
 /// Abstraction for random/unpredictable/system-specific crypto operations
 protocol Crypto {
@@ -19,28 +25,54 @@ protocol SecureEnclavePrivateKey {
     -> SharedSecret
 }
 
-class CryptoKitCrypto: Crypto {
-  let context = LAContext()
+#if !os(Linux) && !os(Windows)
+  class CryptoKitCrypto: Crypto {
+    let context = LAContext()
 
-  var isSecureEnclaveAvailable: Bool {
-    return SecureEnclave.isAvailable
+    var isSecureEnclaveAvailable: Bool {
+      return SecureEnclave.isAvailable
+    }
+
+    func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
+      return try SecureEnclave.P256.KeyAgreement.PrivateKey(
+        dataRepresentation: dataRepresentation, authenticationContext: context)
+    }
+
+    func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws
+      -> SecureEnclavePrivateKey
+    {
+      return try SecureEnclave.P256.KeyAgreement.PrivateKey(
+        accessControl: accessControl, authenticationContext: context)
+    }
+
+    func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
+      return P256.KeyAgreement.PrivateKey()
+    }
   }
 
-  func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
-    return try SecureEnclave.P256.KeyAgreement.PrivateKey(
-      dataRepresentation: dataRepresentation, authenticationContext: context)
+  extension SecureEnclave.P256.KeyAgreement.PrivateKey: SecureEnclavePrivateKey {
   }
 
-  func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
-  {
-    return try SecureEnclave.P256.KeyAgreement.PrivateKey(
-      accessControl: accessControl, authenticationContext: context)
+#else
+
+  class CryptoKitCrypto: Crypto {
+    var isSecureEnclaveAvailable: Bool {
+      return false
+    }
+
+    func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
+      throw Plugin.Error.seUnsupported
+    }
+
+    func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws
+      -> SecureEnclavePrivateKey
+    {
+      throw Plugin.Error.seUnsupported
+    }
+
+    func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
+      return P256.KeyAgreement.PrivateKey()
+    }
   }
 
-  func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
-    return P256.KeyAgreement.PrivateKey()
-  }
-}
-
-extension SecureEnclave.P256.KeyAgreement.PrivateKey: SecureEnclavePrivateKey {
-}
+#endif

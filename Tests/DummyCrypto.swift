@@ -1,7 +1,12 @@
-import CryptoKit
 import Foundation
 
 @testable import age_plugin_se
+
+#if !os(Linux) && !os(Windows)
+  import CryptoKit
+#else
+  import Crypto
+#endif
 
 class DummyCrypto: Crypto {
   // If more keys are needed, add them to the front

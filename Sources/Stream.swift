@@ -1,4 +1,3 @@
-import Darwin
 import Foundation
 
 /// Abstraction of a line-based communication stream

@@ -1,7 +1,12 @@
-import CryptoKit
 import XCTest
 
 @testable import age_plugin_se
+
+#if !os(Linux) && !os(Windows)
+  import CryptoKit
+#else
+  import Crypto
+#endif
 
 final class PluginTests: XCTestCase {
   func testCertificateTag() throws {

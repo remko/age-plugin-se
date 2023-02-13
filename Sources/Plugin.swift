@@ -1,5 +1,10 @@
-import CryptoKit
 import Foundation
+
+#if !os(Linux) && !os(Windows)
+  import CryptoKit
+#else
+  import Crypto
+#endif
 
 class Plugin {
   var crypto: Crypto
@@ -14,31 +19,39 @@ class Plugin {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
-    let createdAt = now.ISO8601Format()
-    var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
-    if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
-      accessControlFlags.insert(.biometryAny)
-    }
-    if accessControl == .currentBiometry || accessControl == .currentBiometryAndPasscode {
-      accessControlFlags.insert(.biometryCurrentSet)
-    }
-    if accessControl == .passcode || accessControl == .anyBiometryAndPasscode
-      || accessControl == .currentBiometryAndPasscode
-    {
-      accessControlFlags.insert(.devicePasscode)
-    }
-    if accessControl == .anyBiometryOrPasscode {
-      accessControlFlags.insert(.userPresence)
-    }
-    var error: Unmanaged<CFError>?
-    guard
-      let secAccessControl = SecAccessControlCreateWithFlags(
-        kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
-        accessControlFlags,
-        &error)
-    else {
-      throw error!.takeRetainedValue() as Swift.Error
-    }
+    #if !os(Linux) && !os(Windows)
+      let createdAt = now.ISO8601Format()
+      var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
+      if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
+        accessControlFlags.insert(.biometryAny)
+      }
+      if accessControl == .currentBiometry || accessControl == .currentBiometryAndPasscode {
+        accessControlFlags.insert(.biometryCurrentSet)
+      }
+      if accessControl == .passcode || accessControl == .anyBiometryAndPasscode
+        || accessControl == .currentBiometryAndPasscode
+      {
+        accessControlFlags.insert(.devicePasscode)
+      }
+      if accessControl == .anyBiometryOrPasscode {
+        accessControlFlags.insert(.userPresence)
+      }
+      var error: Unmanaged<CFError>?
+      guard
+        let secAccessControl = SecAccessControlCreateWithFlags(
+          kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+          accessControlFlags,
+          &error)
+      else {
+        throw error!.takeRetainedValue() as Swift.Error
+      }
+    #else
+      // FIXME: ISO8601Format currently not supported on Linux:
+      //   https://github.com/apple/swift-corelibs-foundation/issues/4618
+      // This code is only reached in unit tests on Linux anyway
+      let createdAt = "1997-02-02T02:26:51Z"
+      let secAccessControl = SecAccessControl()
+    #endif
 
     let privateKey = try crypto.newSecureEnclavePrivateKey(accessControl: secAccessControl)
     let recipient = privateKey.publicKey.ageRecipient
@@ -110,7 +123,7 @@ class Plugin {
     fileKeys.enumerated().forEach { (index, fileKey) in
       for recipientKey in recipientKeys {
         do {
-          let ephemeralSecretKey = crypto.newEphemeralPrivateKey()
+          let ephemeralSecretKey = self.crypto.newEphemeralPrivateKey()
           let ephemeralPublicKeyBytes = ephemeralSecretKey.publicKey.compressedRepresentation
           let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(with: recipientKey)
           let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
@@ -255,7 +268,7 @@ class Plugin {
           } catch {
             Stanza(type: "msg", body: error.localizedDescription.data(using: .utf8)!).writeTo(
               stream: stream)
-            let resp = try! Stanza.readFrom(stream: stream)
+            let resp = try! Stanza.readFrom(stream: self.stream)
             assert(resp.type == "ok")
             // continue
           }

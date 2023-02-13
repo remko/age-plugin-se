@@ -117,7 +117,7 @@ struct Options {
     Example:
       $ age-plugin-se keygen -o key.txt
       Public key: age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
-      $ tar cvz ~/data | age -r age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258 > data.tar.gz.age
+      $ tar cvz ~/data | age -r age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp > data.tar.gz.age
       $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
     """
 

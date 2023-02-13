@@ -16,10 +16,10 @@
 
 ## Requirements
 
-This plugin requires macOS 13 (Ventura).
+To generate identity files and decrypt encrypted files, you need a Mac running macOS 13 (Ventura) with a 
+Secure Enclave processor.
 
-To generate identity files and decrypt encrypted files, you need a Mac with a Secure Enclave processor.
-For encrypting files, a Secure Enclave processor is not necessary.
+For encrypting files, you need macOS 13 (Ventura), Linux, or Windows. A Secure Enclave processor is not necessary.
 
 
 ## Installation
@@ -32,20 +32,22 @@ For encrypting files, a Secure Enclave processor is not necessary.
 
 1. Download a binary from [the releases page](https://github.com/remko/age-plugin-se/releases)
 2. Extract the package
-3. Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
+3. (macOS only) Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
    and confirming trust
 4. Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
 
 ### Building from source
 
-1. Clone [the source code repository](https://github.com/remko/age-plugin-se) or 
+1. (non-macOS only) Download and install [Swift](https://www.swift.org/download/)
+
+2. Clone [the source code repository](https://github.com/remko/age-plugin-se) or 
    get a source package from [the releases page](https://github.com/remko/age-plugin-se/releases)
 
-2. Build the plugin
+3. Build the plugin
       
        make
 
-3. Install the plugin
+4. Install the plugin
 
        sudo make install PREFIX=/usr/local
 
