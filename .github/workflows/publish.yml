@@ -12,12 +12,23 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v2
       - uses: ./.github/actions/setup
+
       - run: make package
+        if: runner.os != 'Windows'
+
+      - name: package (windows)
+        run: |
+          $VERSION = Select-String -Path "Sources/CLI.Swift" -Pattern "^let version" | % {$_ -replace '.*"v(.*)"', "`$1" }
+          swift build -c release --static-swift-stdlib
+          $BINPATH = swift build -c release --static-swift-stdlib --show-bin-path
+          7z a -tzip ".build\age-plugin-se-v${VERSION}-windows.zip" "$BINPATH\age-plugin-se.exe"
+        if: runner.os == 'Windows'
+
       - name: "Upload artifacts"
         run: |
           for f in `find .build -maxdepth 1 -name 'age-plugin-se-*.tgz' -o -name 'age-plugin-se-*.zip'`; do
@@ -31,4 +42,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_ASSETS_UPLOAD_URL: https://uploads.github.com/repos/${{ github.event.repository.full_name}}/releases/${{ github.event.release.id }}/assets
         shell: bash
-
