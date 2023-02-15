@@ -1,4 +1,4 @@
-name: Publish
+name: Release
 
 on:
   release:
@@ -8,7 +8,7 @@ jobs:
   build:
     uses: ./.github/workflows/build.yml
 
-  publish-standalone:
+  release:
     needs: build
     strategy:
       matrix:
