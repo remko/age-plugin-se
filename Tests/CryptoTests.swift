@@ -31,15 +31,14 @@ final class CryptoKitCryptoTests: XCTestCase {
   func testPointAtInfinity() throws {
     let sk = P256.KeyAgreement.PrivateKey()
 
-    // base64.b64encode(ECC.EccKey(curve = "p256", point = ECC.generate(curve="p256").pointQ.point_at_infinity()).export_key(format="SEC1"))
+    // base64.b64encode(ECC.generate(curve="p256").export_key(format="DER"))
     let pk = try P256.KeyAgreement.PublicKey(derRepresentation: Data(base64Encoded: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE0Zl262mVCr+1pi9396tEdXC0HIQnENUkWal3nOzLWvX+TYja1xVE++6WzRvunrkBT91380BIJZvB7ZiiEN+Y1A==")!)
     
     // Test that operations work from a regular DER constructed key
     let _ = try sk.sharedSecretFromKeyAgreement(with: pk)
 
     func run() throws {
-      // base64.b64encode(ECC.EccKey(curve = "p256", point = ECC.generate(curve="p256").pointQ.point_at_infinity()).export_key(format="SEC1", compress = True))
-
+      // base64.b64encode(ECC.EccKey(curve = "p256", point = ECC.generate(curve="p256").pointQ.point_at_infinity()).export_key(format="DER"))
       // Swift Crypto throws at construction time
       let identityPK = try P256.KeyAgreement.PublicKey(derRepresentation: Data(base64Encoded: "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==")!)
 
