@@ -125,9 +125,12 @@ class Plugin {
         do {
           let ephemeralSecretKey = self.crypto.newEphemeralPrivateKey()
           let ephemeralPublicKeyBytes = ephemeralSecretKey.publicKey.compressedRepresentation
-          // CryptoKit PublicKeys cannot be the identity point by construction (this is currently
-          // undocumented, but was confirmed in https://developer.apple.com/forums/thread/724829, and is
-          // filed as FB11989432). Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
+          // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
+          // these keys can't be used in any operation. This is undocumented, but a documentation request
+          // has been filed as FB11989432.
+          // Swift Crypto PublicKeys cannot be the identity point by construction.
+          // Compresed representation cannot be the identity point anyway (?)
+          // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
           // to explicitly check this here.
           let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(with: recipientKey)
           let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
@@ -251,9 +254,12 @@ class Plugin {
             let shareKeyData = Data(base64RawEncoded: share)!
             let shareKey: P256.KeyAgreement.PublicKey = try P256.KeyAgreement.PublicKey(
               compressedRepresentation: shareKeyData)
-            // CryptoKit PublicKeys cannot be the identity point by construction (this is currently
-            // undocumented, but was confirmed in https://developer.apple.com/forums/thread/724829, and is
-            // filed as FB11989432). Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
+            // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
+            // these keys can't be used in any operation. This is undocumented, but a documentation request
+            // has been filed as FB11989432.
+            // Swift Crypto PublicKeys cannot be the identity point by construction.
+            // Compresed representation cannot be the identity point anyway (?)
+            // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
             // to explicitly check this here.
             let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(
               with: shareKey)
