@@ -1,4 +1,4 @@
-> ⚠️ **This plugin is not production-ready yet. It is fully functional and tested, but the recipient and identity format are still subject to change. Feedback welcome!**
+> ⚠️ **This plugin is still under review. Feedback welcome!**
 
 # Age plugin for Apple's Secure Enclave
 
@@ -28,15 +28,16 @@ For encrypting files, you need macOS 13 (Ventura), Linux, or Windows. A Secure E
 
 ### Homebrew
 
-> TODO
+> Coming when v1.0 is released
 
 ### Pre-built binary
 
 1. Download a binary from [the releases page](https://github.com/remko/age-plugin-se/releases)
 2. Extract the package
-3. (macOS only) Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
+3. (Windows only) Download and install [Swift](https://www.swift.org/download/)
+4. (macOS only) Trust `age-plugin-se` once by Control-clicking the file in Finder, choosing *Open*, 
    and confirming trust
-4. Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
+5. Move `age-plugin-se` to somewhere on your executable path (e.g. `/usr/local/bin`)
 
 ### Building from source
 
