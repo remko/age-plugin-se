@@ -1,7 +1,7 @@
 import Foundation
 
 extension Data {
-  init?(base64RawEncoded: String, lineWrapped: Bool = false) {
+  init?(base64RawEncoded: String) {
     if base64RawEncoded.hasSuffix("=") {
       return nil
     }
