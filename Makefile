@@ -55,6 +55,12 @@ ifeq ($(COVERAGE),1)
 	@cat $$(swift test --show-codecov-path) | jq -r '.data[0].files[] | "\(.filename)\t\(.summary.lines.percent)\t\(.summary.lines.covered)\t\(.summary.lines.count)"' | grep -v "Tests.swift" | sed -r -e 's/.*\/(Sources\/|Tests\/)/\1/' | xargs printf "  %s: %.2f %% (%d/%d)\\n"
 endif
 
+
+.PHONY: test-loop
+test-loop: test
+	reflex -r '\.swift$$' $(MAKE) test
+
+
 .PHONY: lint
 lint:
 	swift-format lint --recursive --strict .

@@ -26,6 +26,25 @@ struct CLI {
         } else {
           print(result.0)
         }
+      case .recipients:
+        var input = ""
+        if let inputFile = options.input {
+          input = try String(
+            contentsOfFile:
+              FileManager.default.currentDirectoryPath + "/" + inputFile)
+        } else {
+          input = try String(data: FileHandle.standardInput.readToEnd()!, encoding: .utf8)!
+        }
+        let result = try plugin.generateRecipients(input: input)
+        if let outputFile = options.output {
+          FileManager.default.createFile(
+            atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
+            contents: result.data(using: .utf8),
+            attributes: [.posixPermissions: 0o600]
+          )
+        } else if result != "" {
+          print(result)
+        }
       case .plugin(let sm):
         switch sm {
         case .recipientV1:
@@ -67,11 +86,13 @@ struct Options {
     case help
     case version
     case keygen
+    case recipients
     case plugin(StateMachine)
   }
   var command: Command
 
   var output: String?
+  var input: String?
 
   enum AccessControl: String {
     case none = "none"
@@ -100,19 +121,33 @@ struct Options {
     """
     Usage:
       age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
+      age-plugin-se recipients [-o OUTPUT] [-i INPUT]
+
+    Description:
+      The `keygen` subcommand generates a new private key bound to the current 
+      Secure Enclave, with the given access controls, and outputs it to OUTPUT 
+      or standard output.
+
+      The `recipients` subcommand reads an identity file from INPUT or standard 
+      input, and outputs the corresponding recipient(s) to OUTPUT or to standard 
+      output.
 
     Options:
-      -o, --output OUTPUT               Write the result to the file at path OUTPUT
-
       --access-control ACCESS_CONTROL   Access control for using the generated key.
                                         
-                                        When using current biometry, adding or removing a fingerprint stops the
-                                        key from working. Removing an added fingerprint enables the key again. 
+                                        When using current biometry, adding or removing a 
+                                        fingerprint stops the key from working. Removing an 
+                                        added fingerprint enables the key again. 
 
                                         Supported values: none, passcode, 
-                                          any-biometry, any-biometry-and-passcode, any-biometry-or-passcode,
-                                          current-biometry, current-biometry-and-passcode
+                                          any-biometry, any-biometry-and-passcode, 
+                                          any-biometry-or-passcode, current-biometry, 
+                                          current-biometry-and-passcode
                                         Default: any-biometry-or-passcode.                          
+
+      -i, --input INPUT                 Read data from the file at path INPUT
+
+      -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
     Example:
       $ age-plugin-se keygen -o key.txt
@@ -128,6 +163,8 @@ struct Options {
       let arg = args[i]
       if arg == "keygen" {
         opts.command = .keygen
+      } else if arg == "recipients" {
+        opts.command = .recipients
       } else if ["--help", "-h"].contains(arg) {
         opts.command = .help
         break
@@ -135,7 +172,7 @@ struct Options {
         opts.command = .version
         break
       } else if [
-        "--age-plugin", "-o", "--output", "--access-control",
+        "--age-plugin", "-i", "--input", "-o", "--output", "--access-control",
       ].contains(where: {
         arg == $0 || arg.hasPrefix($0 + "=")
       }) {
@@ -155,6 +192,8 @@ struct Options {
         case "--age-plugin":
           opts.command = try .plugin(
             StateMachine(rawValue: value) ?? { throw Error.invalidValue(arg, value) }())
+        case "-i", "--input":
+          opts.input = value
         case "-o", "--output":
           opts.output = value
         case "--access-control":

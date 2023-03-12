@@ -64,10 +64,18 @@ Secure Enclave processor is not necessary.
 ## Usage
 
     age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
+    age-plugin-se recipients [-o OUTPUT] [-i INPUT]
+
+    The `keygen` subcommand generates a new private key bound to the current 
+    Secure Enclave, with the given access controls, and outputs it to OUTPUT 
+    or standard output.
+
+    The `recipients` subcommand reads an identity file from INPUT or standard 
+    input, and outputs the corresponding recipient(s) to OUTPUT or to standard 
+    output.
+
 
     Options:
-      -o, --output OUTPUT               Write the result to the file at path OUTPUT
-      
       --access-control ACCESS_CONTROL   Access control for using the generated key.
                                     
             Supported values: none, passcode, 
@@ -77,6 +85,10 @@ Secure Enclave processor is not necessary.
 
             When using current biometry, adding or removing a fingerprint stops the
             key from working. Removing an added fingerprint enables the key again. 
+
+      -o, --output OUTPUT               Write the result to the file at path OUTPUT
+
+      -i, --input INPUT                 Read data from the file at path INPUT
 
 ## Development
 

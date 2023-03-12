@@ -77,6 +77,19 @@ class Plugin {
     return (contents, recipient)
   }
 
+  func generateRecipients(input: String) throws -> String {
+    var recipients: [String] = []
+    for l in input.split(whereSeparator: \.isNewline) {
+      if l.hasPrefix("#") {
+        continue
+      }
+      let sl = String(l.trimmingCharacters(in: .whitespacesAndNewlines))
+      let privateKey = try newSecureEnclavePrivateKey(ageIdentity: sl, crypto: self.crypto)
+      recipients.append(privateKey.publicKey.ageRecipient)
+    }
+    return recipients.joined(separator: "\n")
+  }
+
   func runRecipientV1() {
     var recipients: [String] = []
     var identities: [String] = []

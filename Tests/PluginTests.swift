@@ -27,7 +27,7 @@ final class PluginTests: XCTestCase {
   }
 }
 
-final class GenerateTests: XCTestCase {
+final class GenerateKeyTests: XCTestCase {
   var stream = MemoryStream()
   var crypto = DummyCrypto()
 
@@ -92,6 +92,84 @@ final class GenerateTests: XCTestCase {
         now: Date(timeIntervalSinceReferenceDate: -123456789.0))
     ) { error in
       XCTAssertEqual(Plugin.Error.seUnsupported, error as! Plugin.Error)
+    }
+  }
+}
+
+final class GenerateRecipientsTests: XCTestCase {
+  var stream = MemoryStream()
+  var crypto = DummyCrypto()
+
+  override func setUp() {
+    stream = MemoryStream()
+    crypto = DummyCrypto()
+  }
+
+  func testGenerate() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    let result = try plugin.generateRecipients(
+      input: """
+        # Comment 1
+        AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+        """
+    )
+    XCTAssertEqual(
+      """
+      age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      """, result)
+  }
+
+  func testGenerate_MultipleLines() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    let result = try plugin.generateRecipients(
+      input: """
+        # Comment 1
+
+        AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
+        # Comment 2
+
+        AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
+        """
+    )
+    XCTAssertEqual(
+      """
+      age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l
+      """, result)
+  }
+
+  func testGenerate_InvalidCharacter() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    XCTAssertThrowsError(
+      try plugin.generateRecipients(
+        input: """
+          - Comment 1
+          AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+          """
+      ))
+  }
+
+  func testGenerate_InvalidPrivateKey() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    XCTAssertThrowsError(
+      try plugin.generateRecipients(
+        input: """
+          AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VH
+          """
+      ))
+  }
+
+  func testGenerate_UnknownPrivateKeyType() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    XCTAssertThrowsError(
+      try plugin.generateRecipients(
+        input: """
+          AGE-SECRET-KEY-18GRJ0APHQRYQ3FX60Y3P3TSUMSCQ0NE6HCA23PKNXTPA6RQSND2SPSLF4W
+          """
+      )
+    ) { error in
+      XCTAssertEqual(Plugin.Error.unknownHRP("AGE-SECRET-KEY-"), error as! Plugin.Error)
     }
   }
 }
