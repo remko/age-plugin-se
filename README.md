@@ -3,6 +3,7 @@
 # Age plugin for Apple's Secure Enclave
 
 [![Build](https://github.com/remko/age-plugin-se/actions/workflows/build.yml/badge.svg)](https://github.com/remko/age-plugin-se/actions/workflows/build.yml)
+[![Coverage](https://remko.github.io/age-plugin-se/ci/coverage.svg)](https://remko.github.io/age-plugin-se/ci/coverage.html)
 
 `age-plugin-se` is a plugin for [age](https://age-encryption.org),
 enabling encryption using [Apple's Secure

@@ -14,6 +14,7 @@ runs:
       sudo mv /tmp/age/age /usr/bin
       curl -L -s https://download.swift.org/swift-5.7.3-release/ubuntu2204/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu22.04.tar.gz | tar xvz -C /tmp
       sudo rsync -a /tmp/swift-5.7.3-RELEASE-ubuntu22.04/usr/ /usr/
+      npm install -g llvm-coverage-viewer
     shell: bash
   - if: runner.os == 'Windows'
     run: |
