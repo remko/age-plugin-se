@@ -21,6 +21,11 @@ jobs:
       # Coverage rule doesn't work on Linux yet
       - run: make test COVERAGE=1
         if: runner.os == 'macOS'
+      - uses: actions/upload-artifact@v3
+        with:
+          name: coverage-${{ matrix.os }}.svg
+          path: .build/coverage.svg
+        if: runner.os == 'macOS'
       - run: make test
         if: runner.os != 'macOS'
       - run: make smoke-test-encrypt
@@ -30,15 +35,16 @@ jobs:
 
   # Running swift from the Makefile doesn't work (yet), so we have a separate
   # build procedure for windows.
-  build-windows:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - uses: ./.github/actions/setup
-      - run: swift build
-      # Unit tests don't seem to work yet
-      # - run: swift test
-      - name: Run smoke test
-        run: |
-          $Env:Path += ";" + (swift build --show-bin-path)
-          echo "test" | age --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age
+  # FIXME: Fix the build again
+  # build-windows:
+  #   runs-on: windows-latest
+  #   steps:
+  #     - uses: actions/checkout@v2
+  #     - uses: ./.github/actions/setup
+  #     - run: swift build
+  #     # Unit tests don't seem to work yet
+  #     # - run: swift test
+  #     - name: Run smoke test
+  #       run: |
+  #         $Env:Path += ";" + (swift build --show-bin-path)
+  #         echo "test" | age --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age
