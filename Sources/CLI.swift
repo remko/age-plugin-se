@@ -18,7 +18,7 @@ struct CLI {
           accessControl: options.accessControl.keyAccessControl, now: Date())
         if let outputFile = options.output {
           FileManager.default.createFile(
-            atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
+            atPath: outputFile,
             contents: result.0.data(using: .utf8),
             attributes: [.posixPermissions: 0o600]
           )
@@ -30,15 +30,14 @@ struct CLI {
         var input = ""
         if let inputFile = options.input {
           input = try String(
-            contentsOfFile:
-              FileManager.default.currentDirectoryPath + "/" + inputFile)
+            contentsOfFile: inputFile)
         } else {
           input = try String(data: FileHandle.standardInput.readToEnd()!, encoding: .utf8)!
         }
         let result = try plugin.generateRecipients(input: input)
         if let outputFile = options.output {
           FileManager.default.createFile(
-            atPath: FileManager.default.currentDirectoryPath + "/" + outputFile,
+            atPath: outputFile,
             contents: result.data(using: .utf8),
             attributes: [.posixPermissions: 0o600]
           )

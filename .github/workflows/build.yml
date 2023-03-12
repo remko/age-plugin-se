@@ -15,23 +15,24 @@ jobs:
         os: [ubuntu-22.04] # macos-13,
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
       - run: make
-      # Coverage rule doesn't work on Linux yet
       - run: make test COVERAGE=1
-        if: runner.os == 'macOS'
-      - uses: actions/upload-artifact@v3
-        with:
-          name: coverage-${{ matrix.os }}.svg
-          path: .build/coverage.svg
-        if: runner.os == 'macOS'
-      - run: make test
-        if: runner.os != 'macOS'
       - run: make smoke-test-encrypt
       - run: make lint
         # We don't have swift-format on Linux yet
         if: runner.os == 'macOS'
+
+      # Our own simplified version of github pages upload
+      - run: |
+          tar -C .build -czf github-pages.tar.gz coverage.svg
+        shell: bash
+      - uses: actions/upload-artifact@v3
+        with:
+          name: github-pages
+          path: github-pages.tar.gz
+        if: runner.os == 'Linux'
 
   # Running swift from the Makefile doesn't work (yet), so we have a separate
   # build procedure for windows.
@@ -39,7 +40,7 @@ jobs:
   # build-windows:
   #   runs-on: windows-latest
   #   steps:
-  #     - uses: actions/checkout@v2
+  #     - uses: actions/checkout@v3
   #     - uses: ./.github/actions/setup
   #     - run: swift build
   #     # Unit tests don't seem to work yet

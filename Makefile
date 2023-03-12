@@ -49,10 +49,8 @@ endif
 test:
 	swift test $(SWIFT_TEST_FLAGS)
 ifeq ($(COVERAGE),1)
-	coverage_total=`cat $$(swift test --show-codecov-path) | jq '.data[0].totals.lines.percent' | xargs printf "%.0f%%"` && (cat Documentation/img/coverage.svg | sed -e "s/{COVERAGE}/$$coverage_total/" > .build/coverage.svg)
-	(command -v llvm-coverage-viewer > /dev/null) && llvm-coverage-viewer --json $$(swift test --show-codecov-path) --output .build/coverage.html
-	@cat $$(swift test --show-codecov-path) | jq '.data[0].totals.lines.percent' | xargs printf "Test coverage (lines): %.2f%%\\n"
-	@cat $$(swift test --show-codecov-path) | jq -r '.data[0].files[] | "\(.filename)\t\(.summary.lines.percent)\t\(.summary.lines.covered)\t\(.summary.lines.count)"' | grep -v "Tests.swift" | sed -r -e 's/.*\/(Sources\/|Tests\/)/\1/' | xargs printf "  %s: %.2f %% (%d/%d)\\n"
+	if (command -v llvm-coverage-viewer > /dev/null); then llvm-coverage-viewer --json $$(swift test --show-codecov-path) --output .build/coverage.html; fi
+	swift ./Scripts/ProcessCoverage.swift $$(swift test --show-codecov-path) .build/coverage.svg
 endif
 
 
