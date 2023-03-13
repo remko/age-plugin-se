@@ -49,8 +49,7 @@ endif
 test:
 	swift test $(SWIFT_TEST_FLAGS)
 ifeq ($(COVERAGE),1)
-	swift ./Scripts/ProcessCoverage.swift $$(swift test --show-codecov-path) .build/coverage.json .build/coverage.svg
-	if (command -v llvm-coverage-viewer > /dev/null); then llvm-coverage-viewer --json .build/coverage.json --output .build/coverage.html; fi
+	swift ./Scripts/ProcessCoverage.swift $$(swift test --show-codecov-path) .build/coverage.json .build/coverage.html .build/coverage.svg
 endif
 
 

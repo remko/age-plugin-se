@@ -106,13 +106,11 @@ To run the unit tests:
 
     make test
 
-To get a coverage report of the unit test:
+To get a coverage report of the unit tests:
 
     make test COVERAGE=1
 
-If you want an HTML version of the coverage report, make sure
-[llvm-coverage-viewer](https://www.npmjs.com/package/llvm-coverage-viewer)
-is installed.
+Annotated coverage source code can be found in `.build/coverage.html`.
 
 To run a smoke test:
 
