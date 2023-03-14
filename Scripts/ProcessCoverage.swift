@@ -133,8 +133,8 @@ for d in report.data {
     let filename = f.filename.stripPrefix(FileManager.default.currentDirectoryPath + "/")
     let percent = String(
       format: "%.01f", Float(f.summary.lines.covered * 100) / Float(f.summary.lines.count))
-    files += "<option value=\"f\(fileID)\">\(filename) (\(percent)%)</option>"
-    out += "<pre id=\"f\(fileID)\" style=\"display: none\">"
+    files += "<option value=\"f\(fileID)\">\(filename.htmlEscaped) (\(percent)%)</option>"
+    out += "<pre id=\"f\(fileID)\" style=\"display: none\"><span>"
     var segments = f.segments
     try String(contentsOfFile: f.filename).split(omittingEmptySubsequences: false) { $0.isNewline }
       .enumerated().forEach { index, line in
@@ -149,16 +149,16 @@ for d in report.data {
             endIndex = l.endIndex
           }
           columnOffset = segment.column - 1
-          let spanClass = !segment.hasCount ? "" : segment.count > 0 ? "covered" : "uncovered"
+          let spanClass = !segment.hasCount ? "" : segment.count > 0 ? "c" : "nc"
           out +=
-            String(l[l.startIndex..<endIndex]).htmlEscaped()
+            String(l[l.startIndex..<endIndex]).htmlEscaped
             + "</span><span class=\"\(spanClass)\">"
           l = l[endIndex..<l.endIndex]
           segments.removeFirst(1)
         }
-        out += String(l).htmlEscaped() + "\n"
+        out += String(l).htmlEscaped + "\n"
       }
-    out += "</pre>"
+    out += "</span></pre>"
     fileID += 1
   }
 }
@@ -179,8 +179,8 @@ out =
         }
         nav { position: fixed; top: 0; }
         pre { margin-top: 25px; }
-        .covered { color: green; }
-        .uncovered { color: red; }
+        .c { color: green; }
+        .nc { color: red; }
       </style>
     </head>
     <body>
@@ -376,7 +376,10 @@ extension String {
     return self.hasPrefix(prefix) ? String(self.dropFirst(prefix.count)) : self
   }
 
-  func htmlEscaped() -> String {
-    return self.replacingOccurrences(of: "<", with: "&lt;")
+  var htmlEscaped: String {
+    return self.replacingOccurrences(of: "&", with: "&amp;").replacingOccurrences(
+      of: "<", with: "&lt;"
+    ).replacingOccurrences(
+      of: ">", with: "&gt;")
   }
 }
