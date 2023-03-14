@@ -30,7 +30,13 @@ Secure Enclave processor is not necessary.
 
 ### Homebrew
 
-> Coming when v1.0 is released
+1.  Register the Homebrew Tap
+
+         brew tap remko/age-plugin-se https://github.com/remko/age-plugin-se
+
+2.  Install the package
+
+         brew install --HEAD age-plugin-se
 
 ### Pre-built binary
 
