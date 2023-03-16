@@ -25,8 +25,8 @@ jobs:
         # We don't have swift-format on Linux yet
         if: runner.os == 'macOS'
 
-      # Upload build artifacts to site
-      # Deploy happens in the `deploy-site` workflow, which only runs on main
+      # Build & upload site artifacts
+      # Deploy happens in the `build-main` workflow, which only runs on main
       - run: |
           mkdir -p .build/site/ci
           cp .build/coverage.svg .build/coverage.html .build/site/ci
