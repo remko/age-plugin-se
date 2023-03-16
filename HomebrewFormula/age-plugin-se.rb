@@ -1,9 +1,9 @@
 class AgePluginSe < Formula
   desc "Age plugin for Apple Secure Enclave"
   homepage "https://github.com/remko/age-plugin-se"
-  url "https://github.com/remko/age-plugin-se/archive/refs/tags/v0.0.3.zip"
-  version "0.0.3"
-  sha256 "24339db89ee7c8169bd352914a2c18b774623f8e3ce56d1a6eaa64b2f3c614a3"
+  url "https://github.com/remko/age-plugin-se/archive/refs/tags/v0.0.4.zip"
+  version "0.0.4"
+  sha256 "7b8ffbd6ad771fb249b4d59fff45b2aa8def9478c31871ab760a440617943c39"
   license "MIT"
   head "https://github.com/remko/age-plugin-se.git", branch: "main"
 

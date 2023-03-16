@@ -36,7 +36,7 @@ Secure Enclave processor is not necessary.
 
 2.  Install the package
 
-         brew install --HEAD age-plugin-se
+         brew install age-plugin-se
 
 ### Pre-built binary
 
