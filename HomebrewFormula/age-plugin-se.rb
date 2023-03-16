@@ -17,16 +17,15 @@ class AgePluginSe < Formula
   end
 
   test do
-    `age-plugin-se keygen`
-    have_se = $CHILD_STATUS.exitstatus == 0
+    out = `age-plugin-se keygen`
+    have_se = $CHILD_STATUS.exitstatus == 0 || !out.include?("Secure Enclave not supported on this device")
     if have_se
-      # Complete test, but only works on machines with secure enclave
       recipient = shell_output("age-plugin-se keygen --access-control=none -o key.txt").split[2]
       system "age", "--encrypt", "-r", recipient, "-o", "key.txt.age", "key.txt"
       system "age", "--decrypt", "-i", "key.txt", "-o", "key.decrypted.txt", "key.txt.age"
       assert_equal (testpath/"key.txt").read, (testpath/"key.decrypted.txt").read
     else
-      # Works without secure enclave
+      opoo "No Secure Enclave detected. Only testing encryption."
       (testpath/"secret.txt").write "My secret"
       system "age", "--encrypt", "-r", "age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp", "-o", "secret.txt.age", "secret.txt"
       assert_predicate testpath/"secret.txt.age", :exist?

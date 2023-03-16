@@ -24,9 +24,35 @@ final class OptionsTests: XCTestCase {
     XCTAssertEqual(.anyBiometry, options.accessControl)
   }
 
+  func testParse_KeyGen_InvalidAccessControl() throws {
+    XCTAssertThrowsError(try Options.parse(["_", "keygen", "--access-control=unknown"])) { error in
+      XCTAssertEqual(Options.Error.invalidValue("--access-control", "unknown"), error as! Options.Error)
+    }
+  }
+
+  func testParse_Recipients() throws {
+    let options = try Options.parse(["_", "recipients", "--output=recipients.txt", "--input=identity.txt"])
+    XCTAssertEqual(.recipients, options.command)
+    XCTAssertEqual("identity.txt", options.input)
+    XCTAssertEqual("recipients.txt", options.output)
+  }
+
+  func testParse_Recipients_NoOptions() throws {
+    let options = try Options.parse(["_", "recipients"])
+    XCTAssertEqual(.recipients, options.command)
+    XCTAssertEqual(nil, options.input)
+    XCTAssertEqual(nil, options.output)
+  }
+
   func testParse_AgePlugin() throws {
-    let options = try Options.parse(["_", "keygen", "--age-plugin=identity-v1"])
+    let options = try Options.parse(["_", "--age-plugin=identity-v1"])
     XCTAssertEqual(.plugin(.identityV1), options.command)
+  }
+
+  func testParse_AgePlugin_InvalidPlugin() throws {
+    XCTAssertThrowsError(try Options.parse(["_", "--age-plugin=unknown-v1"])) { error in
+      XCTAssertEqual(Options.Error.invalidValue("--age-plugin", "unknown-v1"), error as! Options.Error)
+    }
   }
 
   func testParse_LongOptionWithEqual() throws {
