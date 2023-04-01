@@ -10,20 +10,14 @@ runs:
       # Age on current Ubuntu doesn't support plugins
       # sudo apt-get update
       # sudo apt-get install age
-      curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz  | tar xvz -C /tmp
-      sudo mv /tmp/age/age /usr/bin
-      curl -L -s https://download.swift.org/swift-5.7.3-release/ubuntu2204/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu22.04.tar.gz | tar xvz -C /tmp
-      sudo rsync -a /tmp/swift-5.7.3-RELEASE-ubuntu22.04/usr/ /usr/
+      curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz  | tar xvz
+      echo "$GITHUB_WORKSPACE/age" >> $GITHUB_PATH
     shell: bash
   - if: runner.os == 'Windows'
-    run: |
-      choco install age.portable
-      # winget is currently not installed on GitHub runners
-      # winget install --accept-source-agreements Swift.Toolchain
-      Install-Binary -Url https://download.swift.org/swift-5.7.3-release/windows10/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-windows10.exe -Name SwiftInstaller.exe -ArgumentList("-q")
-      "C:\Library\Developer\Toolchains\unknown-Asserts-development.xctoolchain\usr\bin" >> $env:GITHUB_PATH
-      "C:\Program Files\swift\runtime-development\usr\bin" >> $env:GITHUB_PATH
-      "C:\Program Files\swift\icu-69.1\usr\bin" >> $env:GITHUB_PATH
-      "SDKROOT=C:\Library\Developer\Platforms\Windows.platform\Developer\SDKs\Windows.sdk" >> $env:GITHUB_ENV
-      "DEVELOPER_DIR=C:\Library\Developer" >> $env:GITHUB_ENV
+    run: choco install age.portable
     shell: pwsh
+  - if: runner.os == 'Windows'
+    uses: compnerd/gha-setup-swift@main
+    with:
+      branch: swift-5.8-release
+      tag: 5.8-RELEASE

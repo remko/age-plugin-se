@@ -12,8 +12,7 @@ jobs:
     needs: build
     strategy:
       matrix:
-        # os: [ubuntu-22.04, windows-latest]
-        os: [ubuntu-22.04]
+        os: [ubuntu-22.04, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
@@ -34,7 +33,8 @@ jobs:
       - name: "Upload artifacts"
         run: |
           for f in `find .build -maxdepth 1 -name 'age-plugin-se-*.tgz' -o -name 'age-plugin-se-*.zip'`; do
-            curl --fail \
+            echo "Uploading: $f ($(file -b --mime-type $f))"
+            curl --fail-with-body --retry-all-errors --retry 5 \
               -H "Authorization: token $GITHUB_TOKEN" \
               -H "Content-Type: $(file -b --mime-type $f)" \
               --data-binary @$f \
