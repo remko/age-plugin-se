@@ -31,7 +31,7 @@ jobs:
       - uses: actions/upload-pages-artifact@v1
         with:
           path: .build/site
-        if: runner.os == 'Linux'
+        if: runner.os == 'macOS'
 
   # Running swift from the Makefile doesn't work (yet), so we have a separate
   # build procedure for windows.
