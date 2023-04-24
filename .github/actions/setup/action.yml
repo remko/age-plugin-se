@@ -12,6 +12,10 @@ runs:
       # sudo apt-get install age
       curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz  | tar xvz
       echo "$GITHUB_WORKSPACE/age" >> $GITHUB_PATH
+      # Using a downloaded version on Linux, because the system version suddenly broke.
+      # Using 5.7, because 5.8 breaks the coverage option. Fixed in 5.9.
+      curl -L -s https://download.swift.org/swift-5.7.3-release/ubuntu2204/swift-5.7.3-RELEASE/swift-5.7.3-RELEASE-ubuntu22.04.tar.gz | tar xvz 
+      echo "$GITHUB_WORKSPACE/swift-5.7.3-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
     shell: bash
   - if: runner.os == 'Windows'
     run: choco install age.portable
