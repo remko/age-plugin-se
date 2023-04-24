@@ -26,12 +26,15 @@ final class OptionsTests: XCTestCase {
 
   func testParse_KeyGen_InvalidAccessControl() throws {
     XCTAssertThrowsError(try Options.parse(["_", "keygen", "--access-control=unknown"])) { error in
-      XCTAssertEqual(Options.Error.invalidValue("--access-control", "unknown"), error as! Options.Error)
+      XCTAssertEqual(
+        Options.Error.invalidValue("--access-control", "unknown"), error as! Options.Error)
     }
   }
 
   func testParse_Recipients() throws {
-    let options = try Options.parse(["_", "recipients", "--output=recipients.txt", "--input=identity.txt"])
+    let options = try Options.parse([
+      "_", "recipients", "--output=recipients.txt", "--input=identity.txt",
+    ])
     XCTAssertEqual(.recipients, options.command)
     XCTAssertEqual("identity.txt", options.input)
     XCTAssertEqual("recipients.txt", options.output)
@@ -51,7 +54,8 @@ final class OptionsTests: XCTestCase {
 
   func testParse_AgePlugin_InvalidPlugin() throws {
     XCTAssertThrowsError(try Options.parse(["_", "--age-plugin=unknown-v1"])) { error in
-      XCTAssertEqual(Options.Error.invalidValue("--age-plugin", "unknown-v1"), error as! Options.Error)
+      XCTAssertEqual(
+        Options.Error.invalidValue("--age-plugin", "unknown-v1"), error as! Options.Error)
     }
   }
 
