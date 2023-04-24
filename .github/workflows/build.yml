@@ -10,10 +10,7 @@ jobs:
   build:
     strategy:
       matrix:
-        # FIXME: Doesn't work on macOS yet, since we use macOS 13 APIs
-        # https://github.com/actions/runner-images/issues/6426
-        # https://github.com/github/roadmap/issues/620
-        os: [ubuntu-22.04] # macos-13,
+        os: [macos-13, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
