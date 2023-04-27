@@ -1,6 +1,10 @@
 PREFIX ?= /usr/local
 AGE ?= age
 
+ifneq ($(V),1)
+AT=@
+endif
+
 ifeq ($(RELEASE),1)
 SWIFT_BUILD_FLAGS=-c release --disable-sandbox
 endif
@@ -69,7 +73,7 @@ install:
 
 .PHONY: smoke-test
 smoke-test:
-	PATH="$(BUILD_DIR):$$PATH" && \
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
 	recipient=`age-plugin-se keygen --access-control=any-biometry -o key.txt | sed -e "s/Public key: //"` && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
@@ -80,7 +84,7 @@ smoke-test:
 
 .PHONY: smoke-test-noninteractive
 smoke-test-noninteractive:
-	PATH="$(BUILD_DIR):$$PATH" && \
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
 	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
@@ -91,20 +95,22 @@ smoke-test-noninteractive:
 
 .PHONY: smoke-test-encrypt
 smoke-test-encrypt:
-	PATH="$(BUILD_DIR):$$PATH" && \
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
 	($(ECHO) "test" | $(AGE) --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age) && \
 	$(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' && \
 	rm -f secret.txt.age
 
+INTEROP_PLUGIN=yubikey
+
 .PHONY: piv-p256-decrypt-interop-test
 piv-p256-decrypt-interop-test:
-	PATH="$(BUILD_DIR):$$PATH" && \
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
 	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
-	yubikey_recipient=`./Scripts/ConvertBech32HRP.swift $$recipient age1yubikey` && \
-	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$yubikey_recipient'...' && \
-	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$yubikey_recipient -o secret.txt.age) && \
+	interop_recipient=`./Scripts/ConvertBech32HRP.swift $$recipient age1$(INTEROP_PLUGIN)` && \
+	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$interop_recipient'...' && \
+	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$interop_recipient -o secret.txt.age) && \
 	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
 	$(AGE) --decrypt -i key.txt secret.txt.age && \
 	rm -f key.txt secret.txt.age
@@ -121,7 +127,7 @@ gen-manual-tests:
 
 .PHONY: run-manual-tests
 run-manual-tests:
-	PATH="$(BUILD_DIR):$$PATH" && set -e && \
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
 		$(ECHO) "\\xf0\\x9f\\x94\\x93 Decrypting '$$control'..." && \
 		$(AGE) --decrypt -i manual-tests/key.$$control.txt manual-tests/secret.txt.$$control.age; \
