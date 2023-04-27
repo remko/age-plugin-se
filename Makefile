@@ -97,6 +97,18 @@ smoke-test-encrypt:
 	$(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' && \
 	rm -f secret.txt.age
 
+.PHONY: piv-p256-decrypt-interop-test
+piv-p256-decrypt-interop-test:
+	PATH="$(BUILD_DIR):$$PATH" && \
+	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
+	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
+	yubikey_recipient=`./Scripts/ConvertBech32HRP.swift $$recipient age1yubikey` && \
+	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$yubikey_recipient'...' && \
+	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$yubikey_recipient -o secret.txt.age) && \
+	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
+	$(AGE) --decrypt -i key.txt secret.txt.age && \
+	rm -f key.txt secret.txt.age
+
 .PHONY: gen-manual-tests
 gen-manual-tests:
 	-rm -rf gen-manual-tests
