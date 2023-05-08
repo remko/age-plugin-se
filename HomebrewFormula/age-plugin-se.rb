@@ -7,7 +7,7 @@ class AgePluginSe < Formula
   license "MIT"
   head "https://github.com/remko/age-plugin-se.git", branch: "main"
 
-  depends_on :macos
+  depends_on macos: :ventura
   depends_on xcode: ["14.0", :build]
   depends_on "age" => :test
 
