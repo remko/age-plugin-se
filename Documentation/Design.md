@@ -2,6 +2,15 @@
 
 This document contains notes about design choices made in the plugin.
 
+## `piv-p256` recipient stanza
+
+This plugin uses the `piv-p256` recipient stanza in encrypted files.
+This is the same stanza used by the [age YubiKey
+plugin](https://github.com/str4d/age-plugin-yubikey).
+
+The `piv-p256` recipient stanza is [currently being
+standardized](https://github.com/C2SP/C2SP/pull/31).
+
 ## SecureEnclave APIs: Security vs CryptoKit
 
 Apple provides 2 APIs for communicating with the Secure Enclave:
