@@ -41,7 +41,7 @@ public class Bech32 {
   /// Bech32 checksum delimiter
   private let checksumMarker: String = "1"
   /// Bech32 character set for encoding
-  private let encCharset: Data = "qpzry9x8gf2tvdw0s3jn54khce6mua7l".data(using: .utf8)!
+  private let encCharset: Data = Data("qpzry9x8gf2tvdw0s3jn54khce6mua7l".utf8)
   /// Bech32 character set for decoding
   private let decCharset: [Int8] = [
     -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1,
@@ -93,7 +93,7 @@ public class Bech32 {
 
   /// Expand a HRP for use in checksum computation.
   private func expandHrp(_ hrp: String) -> Data {
-    guard let hrpBytes = hrp.data(using: .utf8) else { return Data() }
+    let hrpBytes = Data(hrp.utf8)
     var result = Data(repeating: 0x00, count: hrpBytes.count * 2 + 1)
     for (i, c) in hrpBytes.enumerated() {
       result[i] = c >> 5
@@ -129,20 +129,18 @@ public class Bech32 {
     var combined = values
     combined.append(checksum)
 
-    guard let hrpBytes = hrp.data(using: .utf8) else { return "" }
+    let hrpBytes = Data(hrp.utf8)
     var ret = hrpBytes
-    ret.append("1".data(using: .utf8)!)
+    ret.append(Data("1".utf8))
     for i in combined {
       ret.append(encCharset[Int(i)])
     }
-    return String(data: ret, encoding: .utf8) ?? ""
+    return String(decoding: ret, as: UTF8.self)
   }
 
   /// Decode Bech32 string
   public func decodeBech32(_ str: String) throws -> (hrp: String, checksum: Data) {
-    guard let strBytes = str.data(using: .utf8) else {
-      throw DecodingError.nonUTF8String
-    }
+    let strBytes = Data(str.utf8)
     var lower: Bool = false
     var upper: Bool = false
     for c in strBytes {

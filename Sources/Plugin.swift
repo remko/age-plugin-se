@@ -149,7 +149,7 @@ class Plugin {
           let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
           let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
             using: SHA256.self, salt: salt,
-            sharedInfo: "piv-p256".data(using: .utf8)!,
+            sharedInfo: Data("piv-p256".utf8),
             outputByteCount: 32
           )
           let sealedBox = try ChaChaPoly.seal(
@@ -280,7 +280,7 @@ class Plugin {
               shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
             let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
               using: SHA256.self, salt: salt,
-              sharedInfo: "piv-p256".data(using: .utf8)!,
+              sharedInfo: Data("piv-p256".utf8),
               outputByteCount: 32
             )
             let unwrappedKey = try ChaChaPoly.open(
@@ -293,7 +293,7 @@ class Plugin {
               body: unwrappedKey
             )
           } catch {
-            Stanza(type: "msg", body: error.localizedDescription.data(using: .utf8)!).writeTo(
+            Stanza(type: "msg", body: Data(error.localizedDescription.utf8)).writeTo(
               stream: stream)
             let resp = try! Stanza.readFrom(stream: self.stream)
             assert(resp.type == "ok")
@@ -376,7 +376,7 @@ extension Stanza {
   init(error type: String, args: [String] = [], message: String) {
     self.type = "error"
     self.args = [type] + args
-    self.body = message.data(using: .utf8)!
+    self.body = Data(message.utf8)
   }
 }
 

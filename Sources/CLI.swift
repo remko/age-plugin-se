@@ -19,7 +19,7 @@ struct CLI {
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
-            contents: result.0.data(using: .utf8),
+            contents: Data(result.0.utf8),
             attributes: [.posixPermissions: 0o600]
           )
           print("Public key: \(result.1)")
@@ -38,7 +38,7 @@ struct CLI {
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
-            contents: result.data(using: .utf8),
+            contents: Data(result.utf8),
             attributes: [.posixPermissions: 0o600]
           )
         } else if result != "" {

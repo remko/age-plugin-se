@@ -31,6 +31,6 @@ extension Data {
   }
 
   var base64RawEncodedString: String {
-    return String(data: base64RawEncodedData, encoding: .utf8)!
+    return String(decoding: base64RawEncodedData, as: UTF8.self)
   }
 }

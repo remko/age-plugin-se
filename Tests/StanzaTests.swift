@@ -30,8 +30,10 @@ final class StanzaTests: XCTestCase {
         type: "mytype",
         args: ["MyArgument1", "MyArgument2"],
         body:
-          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-          .data(using: .utf8)!
+          Data(
+            "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+              .utf8
+          )
       ), try Stanza.readFrom(stream: stream))
   }
 
@@ -63,8 +65,7 @@ final class StanzaTests: XCTestCase {
         type: "mystanza",
         args: [],
         body:
-          "Lorem ipsum dolor sit amet, consectetur adipisci"
-          .data(using: .utf8)!
+          Data("Lorem ipsum dolor sit amet, consectetur adipisci".utf8)
       ), try Stanza.readFrom(stream: stream))
   }
 
@@ -162,8 +163,9 @@ final class StanzaTests: XCTestCase {
       type: "mytype",
       args: ["MyArgument1", "MyArgument2"],
       body:
-        "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
-        .data(using: .utf8)!
+        Data(
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum."
+            .utf8)
     ).writeTo(stream: stream)
     XCTAssertEqual(
       """
@@ -184,7 +186,7 @@ final class StanzaTests: XCTestCase {
   func testWriteTo_NoArguments() throws {
     Stanza(
       type: "mytype",
-      body: "Lorem ipsum".data(using: .utf8)!
+      body: Data("Lorem ipsum".utf8)
     ).writeTo(stream: stream)
     XCTAssertEqual(
       """

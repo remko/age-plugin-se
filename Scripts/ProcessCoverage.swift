@@ -84,7 +84,8 @@ print(
 let percentRounded = Int((Float(totalCovered * 100) / Float(totalCount)).rounded())
 FileManager.default.createFile(
   atPath: badgeOutputPath,
-  contents: """
+  contents: Data(
+    """
     <svg xmlns="http://www.w3.org/2000/svg" width="105" height="20">
       <title>Coverage - \(percent)%</title>
       <defs>
@@ -118,8 +119,8 @@ FileManager.default.createFile(
         </g>
       </g>
     </svg>
-    """.data(using: .utf8)
-)
+    """.utf8
+  ))
 
 ////////////////////////////////////////////////////////////////////////////////
 // HTML Report
@@ -224,7 +225,7 @@ out =
   """
 FileManager.default.createFile(
   atPath: htmlOutputPath,
-  contents: out.data(using: .utf8)
+  contents: Data(out.utf8)
 )
 
 ////////////////////////////////////////////////////////////////////////////////

@@ -12,7 +12,7 @@ class StandardIOStream: Stream {
   }
 
   func writeLine(_ line: String) {
-    FileHandle.standardOutput.write(line.data(using: .utf8)!)
+    FileHandle.standardOutput.write(Data(line.utf8))
     FileHandle.standardOutput.write(Data([0xa]))
     fflush(stdout)
   }
