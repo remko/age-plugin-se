@@ -116,7 +116,7 @@ class Plugin {
     var stanzas: [Stanza] = []
     var errors: [Stanza] = []
     var recipientKeys: [P256.KeyAgreement.PublicKey] = []
-    recipients.enumerated().forEach { (index, recipient) in
+    for (index, recipient) in recipients.enumerated() {
       do {
         recipientKeys.append(try P256.KeyAgreement.PublicKey(ageRecipient: recipient))
       } catch {
@@ -124,7 +124,7 @@ class Plugin {
           Stanza(error: "recipient", args: [String(index)], message: error.localizedDescription))
       }
     }
-    identities.enumerated().forEach { (index, identity) in
+    for (index, identity) in identities.enumerated() {
       do {
         recipientKeys.append(
           (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)).publicKey)
@@ -133,7 +133,7 @@ class Plugin {
           Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
       }
     }
-    fileKeys.enumerated().forEach { (index, fileKey) in
+    for (index, fileKey) in fileKeys.enumerated() {
       for recipientKey in recipientKeys {
         do {
           let ephemeralSecretKey = self.crypto.newEphemeralPrivateKey()
@@ -201,7 +201,7 @@ class Plugin {
     var errors: [Stanza] = []
 
     // Construct identities
-    identities.enumerated().forEach { (index, identity) in
+    for (index, identity) in identities.enumerated() {
       do {
         identityKeys.append(
           (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)))
@@ -214,48 +214,48 @@ class Plugin {
     var fileResponses: [Int: Stanza] = [:]
     if errors.isEmpty {
       // Check structural validity
-      recipientStanzas.enumerated().forEach { (index, recipientStanza) in
+      for recipientStanza in recipientStanzas {
         let fileIndex = Int(recipientStanza.args[0])!
         switch recipientStanza.args[1] {
         case "piv-p256":
           if recipientStanza.args.count != 4 {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)], message: "incorrect argument count")
-            return
+            continue
           }
           let tag = Data(base64RawEncoded: recipientStanza.args[2])
           if tag == nil || tag!.count != 4 {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)], message: "invalid tag")
-            return
+            continue
           }
           let share = Data(base64RawEncoded: recipientStanza.args[3])
           if share == nil || share!.count != 33 {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)], message: "invalid share")
-            return
+            continue
           }
           if recipientStanza.body.count != 32 {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)],
               message: "invalid body")
-            return
+            continue
           }
 
         default:
-          return
+          continue
         }
       }
 
       // Unwrap keys
-      recipientStanzas.enumerated().forEach { (index, recipientStanza) in
+      for recipientStanza in recipientStanzas {
         let fileIndex = Int(recipientStanza.args[0])!
         if fileResponses[fileIndex] != nil {
-          return
+          continue
         }
         let type = recipientStanza.args[1]
         if type != "piv-p256" {
-          return
+          continue
         }
         let tag = recipientStanza.args[2]
         let share = recipientStanza.args[3]

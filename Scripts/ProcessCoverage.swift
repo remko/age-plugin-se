@@ -137,28 +137,30 @@ for d in report.data {
     files += "<option value=\"f\(fileID)\">\(filename.htmlEscaped) (\(percent)%)</option>"
     out += "<pre id=\"f\(fileID)\" style=\"display: none\"><span>"
     var segments = f.segments
-    try String(contentsOfFile: f.filename).split(omittingEmptySubsequences: false) { $0.isNewline }
-      .enumerated().forEach { index, line in
-        var l = line
-        var columnOffset = 0
-        while let segment = segments.first {
-          if segment.line != index + 1 {
-            break
-          }
-          var endIndex = l.utf8.index(l.startIndex, offsetBy: segment.column - 1 - columnOffset)
-          if endIndex > l.endIndex {
-            endIndex = l.endIndex
-          }
-          columnOffset = segment.column - 1
-          let spanClass = !segment.hasCount ? "" : segment.count > 0 ? "c" : "nc"
-          out +=
-            String(l[l.startIndex..<endIndex]).htmlEscaped
-            + "</span><span class=\"\(spanClass)\">"
-          l = l[endIndex..<l.endIndex]
-          segments.removeFirst(1)
+    for (index, line) in try
+      (String(contentsOfFile: f.filename).split(omittingEmptySubsequences: false) { $0.isNewline })
+      .enumerated()
+    {
+      var l = line
+      var columnOffset = 0
+      while let segment = segments.first {
+        if segment.line != index + 1 {
+          break
         }
-        out += String(l).htmlEscaped + "\n"
+        var endIndex = l.utf8.index(l.startIndex, offsetBy: segment.column - 1 - columnOffset)
+        if endIndex > l.endIndex {
+          endIndex = l.endIndex
+        }
+        columnOffset = segment.column - 1
+        let spanClass = !segment.hasCount ? "" : segment.count > 0 ? "c" : "nc"
+        out +=
+          String(l[l.startIndex..<endIndex]).htmlEscaped
+          + "</span><span class=\"\(spanClass)\">"
+        l = l[endIndex..<l.endIndex]
+        segments.removeFirst(1)
       }
+      out += String(l).htmlEscaped + "\n"
+    }
     out += "</span></pre>"
     fileID += 1
   }
@@ -191,38 +193,38 @@ out =
         </select>
       </nav>
   """ + out + """
-  <script>
-    (function() {
-      var filesEl = document.getElementById('files');
-      var selectedEl;
-      function select(fileID) {
-        if (selectedEl != null) {
-          selectedEl.style.display = 'none';
+    <script>
+      (function() {
+        var filesEl = document.getElementById('files');
+        var selectedEl;
+        function select(fileID) {
+          if (selectedEl != null) {
+            selectedEl.style.display = 'none';
+          }
+          selectedEl = document.getElementById(fileID);
+          if (selectedEl == null) {
+            return;
+          }
+          filesEl.value = fileID;
+          selectedEl.style.display = 'block';
+          location.hash = fileID;
         }
-        selectedEl = document.getElementById(fileID);
+
+        if (location.hash !== "") {
+          select(location.hash.substr(1));
+        }
         if (selectedEl == null) {
-          return;
+          select("f0");
         }
-        filesEl.value = fileID;
-        selectedEl.style.display = 'block';
-        location.hash = fileID;
-      }
 
-      if (location.hash !== "") {
-        select(location.hash.substr(1));
-      }
-      if (selectedEl == null) {
-        select("f0");
-      }
-
-      filesEl.addEventListener('change', function() { 
-        select(filesEl.value);
-        window.scrollTo(0, 0);
-      } , false);
-    })();
-  </script>
-  </body></html>
-  """
+        filesEl.addEventListener('change', function() { 
+          select(filesEl.value);
+          window.scrollTo(0, 0);
+        } , false);
+      })();
+    </script>
+    </body></html>
+    """
 FileManager.default.createFile(
   atPath: htmlOutputPath,
   contents: Data(out.utf8)
