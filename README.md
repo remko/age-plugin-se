@@ -16,9 +16,15 @@ Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
 <img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
 </div>
 
+Besides direct usage with age as above, you can use it with any tool
+that uses age in the backend. For example, you can store your passwords
+with [passage](https://github.com/FiloSottile/passage), and conveniently access
+them with Touch ID.
+
+
 ## Requirements
 
-To generate identity files and decrypt encrypted files, you need a Mac
+To generate identities (private keys) and decrypt encrypted files, you need a Mac
 running macOS 13 (Ventura) with a Secure Enclave processor.
 
 For encrypting files, you need macOS 13 (Ventura), Linux, or Windows. A
@@ -65,6 +71,66 @@ Secure Enclave processor is not necessary.
 4.  Install the plugin
 
         sudo make install PREFIX=/usr/local
+
+
+## Guide
+
+In order to encrypt data using the Secure Enclave of your machine, you need to
+generate a private key that is bound to the Secure Enclave. You can generate
+such a private key for age using the `age-plugin-se keygen` command. When
+creating such a key, you also specify which type of protection you want, which
+is a combination of biometry (e.g.  Touch ID) and passcode:
+
+```
+$ age-plugin-se keygen --access-control=any-biometry -o key.txt
+Public key: age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak
+```
+
+The **public** key (recipient) is printed on standard output. This is the key you
+need to *encrypt* data, and can be freely distributed.
+
+The **private** key is stored in `key.txt`:
+
+```
+# created: 2023-07-08T19:00:19Z
+# access control: any biometry
+# public key: age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak
+AGE-PLUGIN-SE-1QJPQZLE3SGQHKVYP75X6KYPZPQ3N44RSW0XVMEZ3QYUNTXXQ7UVQTPSPKY6TYQSZDNVLMZYCYSRQRWP
+```
+
+This is the key you need to be able to *decrypt* the data encrypted for the public
+key. You have to keep this key private. 
+
+> ℹ️ The private key is bound to the secure enclave of your machine, so it cannot 
+> be transferred to another machine. This also means that you should take the 
+> necessary precautions, and make sure you also encrypt any long-term data to an
+> alternate backup key.
+
+Using the public key, you can now encrypt data from any machine (even machines
+without a Secure Enclave, or even machines running Linux or Windows):
+
+```
+$ tar cvz ~/data | age -r age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak
+```
+
+age will automatically pick up the plugin from your execution path, and detect that it
+needs to use this plugin for encrypting to the specified recipient.
+
+To decrypt the encrypted file, pass the private key as an identity to age 
+(running on the machine with the corresponding Secure Enclave for the private key):
+
+```
+$ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+```
+
+The decrypt operation will now require Touch ID to use the 
+Secure Enclave to decrypt it:
+
+<div align="center">
+<img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
+</div>
+
+
 
 ## Usage
 
