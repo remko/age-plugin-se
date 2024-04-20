@@ -1,7 +1,3 @@
-> *⚠️  This plugin is complete and tested, but the recipient stanza used by this 
-> plugin is [still being standardized](https://github.com/C2SP/C2SP/pull/31). 
-> In the meantime, feedback on the plugin is welcome!*
-
 # Age plugin for Apple's Secure Enclave
 
 [![Build](https://github.com/remko/age-plugin-se/actions/workflows/build-main.yml/badge.svg)](https://github.com/remko/age-plugin-se/actions/workflows/build-main.yml)
