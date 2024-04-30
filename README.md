@@ -133,6 +133,32 @@ Secure Enclave to decrypt it:
 <img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
 </div>
 
+### Converting `age-plugin-se` recipients to `age-plugin-yubikey` recipients
+
+`age-plugin-se` recipients can be converted to
+[`age-plugin-yubikey`](https://github.com/str4d/age-plugin-yubikey) recipients
+(and vice versa), and be decrypted with the same `age-plugin-se` private key.
+This could be useful if the system on which you want to encrypt your data has
+the `age-plugin-yubikey` plugin installed, but you're unable to install
+`age-plugin-se`. This also obfuscates the fact that your key is protected by
+Apple Secure Enclave.
+
+To convert recipients, you can use the [`ConvertBech32HRP.swift`](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/ConvertBech32HRP.swift) script. 
+For example, to convert the recipient from earlier to a `age-plugin-yubikey` recipient:
+
+```
+$ ./Scripts/ConvertBech32HRP.swift \
+      age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp \
+      age1yubikey
+age1yubikey1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
+```
+
+This key can now be used to encrypt data for the same private key:
+```
+$ tar cvz ~/data | age -r age1yubikey1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
+$ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+```
+
 
 
 ## Usage
@@ -163,6 +189,8 @@ Secure Enclave to decrypt it:
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
       -i, --input INPUT                 Read data from the file at path INPUT
+
+
 
 ## Development
 
