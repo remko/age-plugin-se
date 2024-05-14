@@ -1,4 +1,4 @@
-AGE-PLUGIN-SE(1) "age-plugin-se @VERSION@" "age-plugin-se manual"
+AGE-PLUGIN-SE(1) "age-plugin-se @VERSION@" ""
 
 # NAME
 
@@ -13,9 +13,13 @@ age-plugin-se - age plugin for Apple Secure Enclave
 
 # DESCRIPTION
 
-The *keygen* subcommand generates a new private key bound to the current Secure
-Enclave, with the given access controls, and outputs it to _OUTPUT_ or standard
-output.
+*age-plugin-se* is a plugin for age, enabling encryption protected by Apple's
+Secure Enclave. It is automatically picked up by age for encryption and decryption
+when the plugin is on the execution path.
+
+The *keygen* subcommand generates a new private key (identity) bound to the
+current Secure Enclave, with the given access controls, and outputs it to
+_OUTPUT_ or standard output.
 
 The *recipients* subcommand reads an identity file from _INPUT_ or standard
 input, and outputs the corresponding recipient(s) to _OUTPUT_ or to standard
@@ -47,7 +51,7 @@ output.
 
 # EXAMPLES
 
-Generate a new key protected by biometry (e.g. Touch ID):
+Generate a new key (identity) protected by biometry (e.g. Touch ID):
 
 ```
 $ age-plugin-se keygen --access-control=any-biometry -o key.txt
@@ -67,11 +71,17 @@ $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 ```
 
 
+# AUTHOR
+
+Remko Tronçon <r@mko.re>
+
+
 # SEE ALSO
 
 age(1)
 
+## Project homepage
 
-# AUTHORS
+https://github.com/remko/age-plugin-se
 
-Remko Tronçon <r@mko.re>
+
