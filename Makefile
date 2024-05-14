@@ -1,5 +1,8 @@
 PREFIX ?= /usr/local
 AGE ?= age
+SCDOC=$(shell command -v scdoc)
+
+export SOURCE_DATE_EPOCH=1715696361
 
 ifneq ($(V),1)
 AT=@
@@ -32,8 +35,12 @@ ifneq ($(UNAME_S),Darwin)
 ECHO = /usr/bin/echo -e
 endif
 
+ifneq ($(SCDOC),)
+MAN_TARGET := man
+endif
+
 .PHONY: all
-all:
+all: $(MAN_TARGET)
 	swift build $(SWIFT_BUILD_FLAGS)
 
 .PHONY: package
@@ -66,10 +73,22 @@ test-loop: test
 lint:
 	swift-format lint --recursive --strict .
 	
-.PHONY: install
+.PHONY: install 
 install:
 	install -d $(PREFIX)/bin
 	install $(BUILD_DIR)/age-plugin-se $(PREFIX)/bin
+ifneq ($(SCDOC),)
+	install -d $(PREFIX)/share/man/man1
+	install .build/age-plugin-se.1 $(PREFIX)/share/man/man1
+endif
+
+man: .build/age-plugin-se.1
+
+.build/age-plugin-se.1: Documentation/age-plugin-se.1.scd
+	mkdir -p .build
+	cat $< | sed "s/@VERSION@/$(VERSION)/g" | scdoc > $@.tmp
+	mv $@.tmp $@
+
 
 .PHONY: smoke-test
 smoke-test:
@@ -137,3 +156,5 @@ run-manual-tests:
 .PHONY: clean
 clean:
 	-rm -rf .build manual-tests
+
+.IGNORE: .build/age-plugin-se.1

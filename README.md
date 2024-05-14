@@ -82,7 +82,7 @@ In order to encrypt data using the Secure Enclave of your machine, you need to
 generate a private key that is bound to the Secure Enclave. You can generate
 such a private key for age using the `age-plugin-se keygen` command. When
 creating such a key, you also specify which type of protection you want, which
-is a combination of biometry (e.g.  Touch ID) and passcode:
+is a combination of biometry (e.g. Touch ID) and passcode:
 
 ```
 $ age-plugin-se keygen --access-control=any-biometry -o key.txt

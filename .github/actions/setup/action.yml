@@ -8,12 +8,13 @@ runs:
   ################################################################################
 
   - if: runner.os == 'macOS'
-    run: brew install age swift-format
+    run: brew install age swift-format scdoc
     shell: bash
   - if: runner.os == 'Linux'
     run: |
+      sudo apt-get update
+      sudo apt-get install -y scdoc
       # Age on current Ubuntu doesn't support plugins
-      # sudo apt-get update
       # sudo apt-get install age
       curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz  | tar xvz
       echo "$GITHUB_WORKSPACE/age" >> $GITHUB_PATH

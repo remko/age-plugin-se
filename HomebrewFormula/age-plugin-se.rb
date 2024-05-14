@@ -9,6 +9,7 @@ class AgePluginSe < Formula
   head "https://github.com/remko/age-plugin-se.git", branch: "main"
 
   depends_on xcode: ["14.0", :build]
+  depends_on "scdoc" => :build
   depends_on "age" => :test
   depends_on macos: :ventura
 
