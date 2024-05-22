@@ -16,7 +16,12 @@ runs:
       sudo apt-get install -y scdoc
       # Age on current Ubuntu doesn't support plugins
       # sudo apt-get install age
-      curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-amd64.tar.gz  | tar xvz
+      case "${{ runner.arch }}" in
+        X64) arch=amd64 ;;
+        ARM64) arch=arm64 ;;
+        *) echo "unknown architecture: ${{ runner.arch }}"; exit -1 ;;
+      esac
+      curl -L -s https://github.com/FiloSottile/age/releases/download/v1.1.1/age-v1.1.1-linux-$arch.tar.gz  | tar xvz
       echo "$GITHUB_WORKSPACE/age" >> $GITHUB_PATH
     shell: bash
   - if: runner.os == 'Windows'
@@ -40,8 +45,13 @@ runs:
 
   - if: runner.os == 'Linux'
     run: |
-      curl -L -s https://download.swift.org/swift-5.9.2-release/ubuntu2204/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-ubuntu22.04.tar.gz | tar xvz 
-      echo "$GITHUB_WORKSPACE/swift-5.9.2-RELEASE-ubuntu22.04/usr/bin" >> $GITHUB_PATH
+      case "${{ runner.arch }}" in
+        X64) arch= ;;
+        ARM64) arch=-aarch64 ;;
+        *) echo "unknown architecture: ${{ runner.arch }}"; exit -1 ;;
+      esac
+      curl -L -s https://download.swift.org/swift-5.9.2-release/ubuntu2204$arch/swift-5.9.2-RELEASE/swift-5.9.2-RELEASE-ubuntu22.04$arch.tar.gz | tar xvz 
+      echo "$GITHUB_WORKSPACE/swift-5.9.2-RELEASE-ubuntu22.04$arch/usr/bin" >> $GITHUB_PATH
     shell: bash
 
   - if: runner.os == 'Windows'
