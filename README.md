@@ -57,6 +57,15 @@ Secure Enclave processor is not necessary.
 5.  Move `age-plugin-se` to somewhere on your executable path (e.g.
     `/usr/local/bin`)
 
+#### Alpine Linux
+
+Because [Swift does not support musl](https://github.com/apple/swift/issues/47209), 
+the pre-built Linux binaries do not work
+out of the box on Alpine Linux. One workaround is to install a glibc-based
+distribution in a chroot, and set up the loader using symlinks, as described in
+[this article](https://wiki.alpinelinux.org/wiki/Running_glibc_programs#Chroot).
+When this is done, the pre-built binaries above work as expected.
+
 ### Building from source
 
 1.  (non-macOS only) Download and install
