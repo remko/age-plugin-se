@@ -20,10 +20,10 @@ SOURCES="Sources Tests Package.swift"
 # These will be bundled, together with the dynamic linker
 LIBS="libm.so.6 libstdc++.so.6 libgcc_s.so.1 libc.so.6"
 
-if [ -z "$PREFIX"]; then
+if [ -z "$PREFIX" ]; then
   PREFIX=/usr/local
 fi
-if [ -z "$DESTDIR"]; then
+if [ -z "$DESTDIR" ]; then
   DESTDIR=.build/chroot-build
 fi
 
