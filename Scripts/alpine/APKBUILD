@@ -1,7 +1,7 @@
 # Contributor: Remko Tronçon <r@mko.re>
 # Maintainer: Remko Tronçon <r@mko.re>
 pkgname=age-plugin-se
-pkgver=0.1.0
+pkgver=0.1.2
 pkgrel=0
 pkgdesc="age plugin for Apple's Secure Enclave"
 url="https://github.com/remko/age-plugin-se"
@@ -13,10 +13,8 @@ checkdepends=""
 options="!check !tracedeps"
 install=""
 subpackages="$pkgname-doc"
-# source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz"
-# builddir="$srcdir/age-plugin-se-${pkgver}"
-source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/heads/main.tar.gz"
-builddir="$srcdir/age-plugin-se-main"
+source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz"
+builddir="$srcdir/age-plugin-se-${pkgver}"
 
 build() {
 	cd $builddir
@@ -37,7 +35,6 @@ package() {
 	gzip $pkgdir/usr/share/man/man1/age-plugin-se.1 || return 1
 }
 
-# `abuild checksum`
 sha512sums="
-967b4ed78880a6aae402540eed7f500d8f9933b1fb525bcd16a1ed811e86e8da70e6cffc80be10e401e9f5be30e98a4bdfff4233eec22b36506e471e88b5aab0  age-plugin-se-0.1.0.tar.gz
+58ce654f0ee9ea97b3dcb04b99ba3d17cb1f7bf8ac46db230258574087ba2fc8ed2fd8b9b31db272b3fe2ec320942acbf0b4a3751836a841e9e6762c0737fc37  age-plugin-se-0.1.2.tar.gz
 "

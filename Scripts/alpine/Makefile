@@ -3,3 +3,6 @@ all:
 
 clean:
 	abuild cleanpkg
+
+update-checksum:
+	abuild checksum
