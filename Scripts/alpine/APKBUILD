@@ -18,7 +18,8 @@ builddir="$srcdir/age-plugin-se-${pkgver}"
 
 build() {
 	cd $builddir
-	doas env PREFIX=/usr Scripts/chroot-build.sh || return 1
+	set
+	doas env PREFIX=/usr $srcdir/../chroot-build.sh || return 1
 	doas chown -R $USER.$USER $builddir/.build || return 1
 	make .build/age-plugin-se.1 || return 1
 }
