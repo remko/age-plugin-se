@@ -1,8 +1,11 @@
+PKGDIR=main/age-plugin-se
+ABUILD_FLAGS=-r -D "age-plugin-se repository" -P $(CURDIR)/packages
+
 all:
-	abuild -r
+	cd $(PKGDIR) && abuild $(ABUILD_FLAGS)
 
 clean:
-	abuild cleanpkg
+	cd $(PKGDIR) && abuild $(ABUILD_FLAGS) cleanpkg
 
 update-checksums:
-	abuild checksum
+	cd $(PKGDIR) && abuild $(ABUILD_FLAGS) checksum
