@@ -9,13 +9,15 @@ arch="aarch64 x86_64"
 license="MIT"
 depends=""
 depends_doc="scdoc"
-makedepends="make debootstrap"
+makedepends="make debootstrap scdoc"
 checkdepends=""
 options="!check !tracedeps"
 install=""
 subpackages="$pkgname-doc"
 source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz chroot-build.sh"
 builddir="$srcdir/age-plugin-se-${pkgver}"
+
+repo="main"
 
 build() {
 	cd $builddir
