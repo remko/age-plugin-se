@@ -1,7 +1,7 @@
 # Contributor: Remko Tronçon <r@mko.re>
 # Maintainer: Remko Tronçon <r@mko.re>
 pkgname=age-plugin-se
-pkgver=0.1.2
+pkgver=0.1.3
 pkgrel=0
 pkgdesc="age plugin for Apple's Secure Enclave"
 url="https://github.com/remko/age-plugin-se"
@@ -39,6 +39,6 @@ package() {
 }
 
 sha512sums="
-57a412be140a0a39646c00e7a73bea09e00324a2c82b57c34f14a9116a457c4aa1a2fd9ec3e6fd9128d2d2453c3efaf3014f42641b6ec5f8f55cd345098a7938  age-plugin-se-0.1.2.tar.gz
+06c28a5b5ab0d876bd67465adc6192c3a8b5920e136b9c67cab6733bb2ea565385ad8eaf852418c0c1d27e55ce39cd2e3b471a9f62bec0a18b4fc1b7d860bfe7  age-plugin-se-0.1.3.tar.gz
 f558fcb211e844a02f5a059d2fd802556424285855bb0a223611ce6537e352c93745fefaa2baef5c2f92605b8b7f2b38aeaaa639c3aef98319dc4bc721e42291  chroot-build.sh
 "
