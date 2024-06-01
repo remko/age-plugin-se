@@ -5,7 +5,7 @@ all:
 	abuild $(ABUILD_FLAGS)
 
 clean:
-	abuild $(ABUILD_FLAGS) cleanpkg
+	-abuild $(ABUILD_FLAGS) cleanpkg
 
 update-checksums:
 	abuild $(ABUILD_FLAGS) checksum

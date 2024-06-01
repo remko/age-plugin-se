@@ -27,7 +27,7 @@ UNAME_S=$(shell uname -s)
 endif
 
 VERSION ?= $(shell cat Sources/CLI.swift | grep '^let version' | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
-BUILD_DIR = $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
+BUILD_DIR ?= $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
 PACKAGE_ARCHS = arm64-apple-macosx x86_64-apple-macosx
 
 ECHO = echo
@@ -74,12 +74,17 @@ lint:
 	swift-format lint --recursive --strict .
 	
 .PHONY: install 
-install:
-	install -d $(PREFIX)/bin
-	install $(BUILD_DIR)/age-plugin-se $(PREFIX)/bin
+install: install-doc
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install $(BUILD_DIR)/age-plugin-se $(DESTDIR)$(PREFIX)/bin
+
+.PHONY: install-doc
+install-doc:
+	install -d $(DESTDIR)$(PREFIX)/share/licenses/age-plugin-se
+	install LICENSE.txt $(DESTDIR)$(PREFIX)/share/licenses/age-plugin-se
 ifneq ($(SCDOC),)
-	install -d $(PREFIX)/share/man/man1
-	install .build/age-plugin-se.1 $(PREFIX)/share/man/man1
+	install -d $(DESTDIR)$(PREFIX)/share/man/man1
+	install .build/age-plugin-se.1 $(DESTDIR)$(PREFIX)/share/man/man1
 endif
 
 man: .build/age-plugin-se.1

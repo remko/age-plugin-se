@@ -8,13 +8,15 @@ url="https://github.com/remko/age-plugin-se"
 arch="aarch64 x86_64"
 license="MIT"
 depends=""
-depends_doc="scdoc"
+depends_doc=""
 makedepends="make debootstrap scdoc"
 checkdepends=""
-options="!check !tracedeps"
+options="!check !tracedeps" # !check because the binary only works if the dynamic linker is at the correct absolute path
 install=""
 subpackages="$pkgname-doc"
-source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz chroot-build.sh"
+source="
+ 	${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz 
+ 	chroot-build.sh"
 builddir="$srcdir/age-plugin-se-${pkgver}"
 
 repo="main"
@@ -27,20 +29,16 @@ build() {
 }
 
 check() {
-	# Check does not work, because the dynamic linker needs to reside at the
-	# correct absolute path
 	:
 }
 
 package() {
-	mkdir -p $pkgdir
-	cp -r $builddir/.build/chroot-build/* $pkgdir || return 1
-	mkdir -p $pkgdir/usr/share/man/man1 || return 1
-	cp $builddir/.build/age-plugin-se.1 $pkgdir/usr/share/man/man1 || return 1
-	gzip $pkgdir/usr/share/man/man1/age-plugin-se.1 || return 1
+	install -d "$pkgdir"
+	cp -r $builddir/.build/chroot-build/* "$pkgdir" || return 1
+	make PREFIX=/usr DESTDIR="$pkgdir" install-doc || return 1
 }
 
 sha512sums="
-58ce654f0ee9ea97b3dcb04b99ba3d17cb1f7bf8ac46db230258574087ba2fc8ed2fd8b9b31db272b3fe2ec320942acbf0b4a3751836a841e9e6762c0737fc37  age-plugin-se-0.1.2.tar.gz
-19ac29f32f405db398d27c1cd20872892b363de7c86ae0ab9d98ecacc424efbb66ca65668b15933411f7d20cd2fe3c833fe3c7a75e10e998bdf223ea8bae5f9d  chroot-build.sh
+57a412be140a0a39646c00e7a73bea09e00324a2c82b57c34f14a9116a457c4aa1a2fd9ec3e6fd9128d2d2453c3efaf3014f42641b6ec5f8f55cd345098a7938  age-plugin-se-0.1.2.tar.gz
+f558fcb211e844a02f5a059d2fd802556424285855bb0a223611ce6537e352c93745fefaa2baef5c2f92605b8b7f2b38aeaaa639c3aef98319dc4bc721e42291  chroot-build.sh
 "

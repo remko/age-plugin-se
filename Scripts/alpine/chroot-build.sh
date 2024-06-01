@@ -1,4 +1,4 @@
-#!/bin/sh -x 
+#!/bin/sh
 
 ################################################################################
 # Builds age-plugin-se in a Debian chroot, and copies the binary
