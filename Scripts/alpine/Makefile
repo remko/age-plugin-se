@@ -4,5 +4,5 @@ all:
 clean:
 	abuild cleanpkg
 
-update-checksum:
+update-checksums:
 	abuild checksum

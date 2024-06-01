@@ -5,26 +5,28 @@ pkgver=0.1.2
 pkgrel=0
 pkgdesc="age plugin for Apple's Secure Enclave"
 url="https://github.com/remko/age-plugin-se"
-arch="all"
+arch="aarch64 x86_64"
 license="MIT"
 depends=""
-makedepends="make scdoc debootstrap"
+depends_doc="scdoc"
+makedepends="make debootstrap"
 checkdepends=""
 options="!check !tracedeps"
 install=""
 subpackages="$pkgname-doc"
-source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz"
+source="${pkgname}-${pkgver}.tar.gz::https://github.com/remko/age-plugin-se/archive/refs/tags/v${pkgver}.tar.gz chroot-build.sh"
 builddir="$srcdir/age-plugin-se-${pkgver}"
 
 build() {
 	cd $builddir
-	set
-	doas env PREFIX=/usr $srcdir/../chroot-build.sh || return 1
+	doas env PREFIX=/usr $srcdir/chroot-build.sh || return 1
 	doas chown -R $USER.$USER $builddir/.build || return 1
 	make .build/age-plugin-se.1 || return 1
 }
 
 check() {
+	# Check does not work, because the dynamic linker needs to reside at the
+	# correct absolute path
 	:
 }
 
@@ -38,4 +40,5 @@ package() {
 
 sha512sums="
 58ce654f0ee9ea97b3dcb04b99ba3d17cb1f7bf8ac46db230258574087ba2fc8ed2fd8b9b31db272b3fe2ec320942acbf0b4a3751836a841e9e6762c0737fc37  age-plugin-se-0.1.2.tar.gz
+19ac29f32f405db398d27c1cd20872892b363de7c86ae0ab9d98ecacc424efbb66ca65668b15933411f7d20cd2fe3c833fe3c7a75e10e998bdf223ea8bae5f9d  chroot-build.sh
 "
