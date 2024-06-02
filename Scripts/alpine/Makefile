@@ -1,4 +1,3 @@
-PKGDIR=main/age-plugin-se
 ABUILD_FLAGS=-r -D "age-plugin-se repository" -P $(CURDIR)/packages
 
 all:
