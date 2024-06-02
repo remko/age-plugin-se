@@ -57,14 +57,33 @@ Secure Enclave processor is not necessary.
 5.  Move `age-plugin-se` to somewhere on your executable path (e.g.
     `/usr/local/bin`)
 
-#### Alpine Linux
+### Alpine Linux
 
 Because [Swift does not support musl](https://github.com/apple/swift/issues/47209), 
 the pre-built Linux binaries do not work
-out of the box on Alpine Linux. One workaround is to install a glibc-based
-distribution in a chroot, and set up the loader using symlinks, as described in
-[this article](https://wiki.alpinelinux.org/wiki/Running_glibc_programs#Chroot).
-When this is done, the pre-built binaries above work as expected.
+out of the box on Alpine Linux. To get `age-plugin-se` on Alpine, you can
+choose between the following 2 options:
+
+- **Option 1: Use a pre-built binary Alpine Linux package**  
+
+    The releases page contains Alpine Linux packages that bundle glibc
+    and all dynamic libraries privately. To install these packages:
+
+    1. Download the [package signing key](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/alpine/r%40mko.re-66596f64.rsa.pub), and install it in `/etc/apk/keys`.
+    2. Download the binary (and optionally the `-doc`) `.apk` file from [the releases
+    page](https://github.com/remko/age-plugin-se/releases).
+    3. Install the downloaded package(s):
+        
+            doas apk add ./age-plugin-se-0.1.3-r0.x86_64.apk
+            doas apk add ./age-plugin-se-doc-0.1.3-r0.x86_64.apk
+
+- **Option 2: Use the pre-built Linux binaries with a glibc-based chroot**  
+
+   Install a glibc-based distribution in a chroot, and set up the loader using
+   symlinks, as described in [this
+   article](https://wiki.alpinelinux.org/wiki/Running_glibc_programs#Chroot).
+   When this is done, the pre-built binaries above work as expected.
+
 
 ### Building from source
 
