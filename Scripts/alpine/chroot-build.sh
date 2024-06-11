@@ -40,8 +40,8 @@ else
   LINKER=ld-linux-x86-64.so.2
 fi
 
-SWIFT_PACKAGE_URL=https://download.swift.org/swift-5.10-release/ubuntu2204$SWIFT_PACKAGE_SUFFIX/swift-5.10-RELEASE/swift-5.10-RELEASE-ubuntu22.04$SWIFT_PACKAGE_SUFFIX.tar.gz
-SWIFT_DIR=/usr/local/swift-5.10-RELEASE-ubuntu22.04$SWIFT_PACKAGE_SUFFIX
+SWIFT_PACKAGE_URL=https://download.swift.org/swift-5.10.1-release/debian12$SWIFT_PACKAGE_SUFFIX/swift-5.10.1-RELEASE/swift-5.10.1-RELEASE-debian12$SWIFT_PACKAGE_SUFFIX.tar.gz
+SWIFT_DIR=/usr/local/swift-5.10.1-RELEASE-debian12$SWIFT_PACKAGE_SUFFIX
 SWIFT=$SWIFT_DIR/usr/bin/swift
 
 ################################################################################
