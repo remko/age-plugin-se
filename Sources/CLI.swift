@@ -116,7 +116,7 @@ struct Options {
   }
   var accessControl = AccessControl.anyBiometryOrPasscode
 
-  static var help =
+  static let help =
     """
     Usage:
       age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
