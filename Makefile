@@ -76,9 +76,11 @@ test-loop: test
 	reflex -r '\.swift$$' $(MAKE) test
 
 
+# Need to explicitly list source dirs instead of `.`, because swift-format doesn't ignore
+# hidden dirs. Should be fixed 'soon'? (https://github.com/apple/swift-format/pull/644)
 .PHONY: lint
 lint:
-	swift-format lint --recursive --strict .
+	swift-format lint --recursive --strict Package.swift Sources Scripts Tests
 	
 .PHONY: install 
 install: install-doc

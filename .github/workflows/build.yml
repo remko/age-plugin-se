@@ -24,7 +24,8 @@ jobs:
       - run: make lint
         # We don't have swift-format on Linux yet
         if: runner.os == 'macOS'
-      - run: make package package-linux
+      # Temporarily run this in the build to avoid surprises at release time
+      - run: make package-linux
         env:
           TOOLCHAINS: swift
         if: runner.os == 'macOS'
