@@ -12,13 +12,17 @@ jobs:
     needs: build
     strategy:
       matrix:
-        os: [macos-13, ubuntu-22.04, windows-latest]
+        os: [macos-13, windows-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v3
       - uses: ./.github/actions/setup
 
       - run: make package
+        if: runner.os != 'Windows'
+      - run: make package-linux
+        env:
+          TOOLCHAINS: swift
         if: runner.os != 'Windows'
 
       - name: package (windows)
