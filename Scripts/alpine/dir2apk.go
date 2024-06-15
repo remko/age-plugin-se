@@ -79,7 +79,7 @@ func doMain() error {
 	////////////////////////////////////////////////////////////////////////////////
 
 	docpkginfo := NewPKGInfo()
-	docpkginfo["arch"] = *arch
+	docpkginfo["arch"] = "noarch"
 	docpkginfo["builddate"] = strconv.FormatInt(builddate.UnixMilli(), 10)
 	docpkginfo["pkgdesc"] = docpkginfo["pkgdesc"] + " (documentation)"
 	docpkginfo["install_if"] = fmt.Sprintf("docs %s=%s", docpkginfo["pkgname"], docpkginfo["pkgver"])
@@ -118,7 +118,7 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 		return err
 	}
 	defer data.Close()
-	pkg, err := os.Create(path.Join(outdir, fmt.Sprintf("%s-%s.apk", pkginfo["pkgname"], pkginfo["pkgver"])))
+	pkg, err := os.Create(path.Join(outdir, fmt.Sprintf("%s-%s-%s.apk", pkginfo["pkgname"], pkginfo["pkgver"], pkginfo["arch"])))
 	if err != nil {
 		return err
 	}

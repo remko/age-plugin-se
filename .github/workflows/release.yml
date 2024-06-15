@@ -22,6 +22,8 @@ jobs:
         if: runner.os != 'Windows'
 
       - uses: actions/setup-go@v5
+        with:
+          go-version: '>=1.22.0'
         if: runner.os == 'macOS'
       - run: |
           echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
