@@ -16,7 +16,7 @@ jobs:
         os: [macos-13, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - run: make
       - run: make test COVERAGE=1
@@ -47,7 +47,7 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
       - run: swift build
       # Unit tests don't seem to work yet
