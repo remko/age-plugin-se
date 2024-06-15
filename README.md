@@ -64,6 +64,9 @@ For Alpine Linux, there are also pre-built `.apk` packages available on [the rel
 To instal them:
 
 1. Download the [package signing key](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/alpine/r%40mko.re-66596f64.rsa.pub), and install it in `/etc/apk/keys`.
+
+        doas wget -P /etc/apk/keys https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/alpine/r@mko.re-66596f64.rsa.pub
+
 2. Download the binary (and optionally the `-doc`) `.apk` file from [the releases
 page](https://github.com/remko/age-plugin-se/releases).
 3. Install the downloaded package(s):
