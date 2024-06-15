@@ -57,6 +57,21 @@ Secure Enclave processor is not necessary.
 5.  Move `age-plugin-se` to somewhere on your executable path (e.g.
     `/usr/local/bin`)
 
+### Alpine Linux
+
+For Alpine Linux, there are also pre-built `.apk` packages available on [the releases page](https://github.com/remko/age-plugin-se/releases).
+
+To instal them:
+
+1. Download the [package signing key](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/alpine/r%40mko.re-66596f64.rsa.pub), and install it in `/etc/apk/keys`.
+2. Download the binary (and optionally the `-doc`) `.apk` file from [the releases
+page](https://github.com/remko/age-plugin-se/releases).
+3. Install the downloaded package(s):
+    
+        doas apk add ./age-plugin-se-0.1.3-r0-x86_64.apk
+        doas apk add ./age-plugin-se-doc-0.1.3-r0-noarch.apk
+
+
 ### Building from source
 
 1.  (non-macOS only) Download and install
