@@ -20,10 +20,16 @@ jobs:
 
       - run: make package
         if: runner.os != 'Windows'
-      - run: make package-linux
+
+      - uses: actions/setup-go@v2
+        if: runner.os == 'macOS'
+      - run: |
+          echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
+          make package-linux
         env:
           TOOLCHAINS: swift
-        if: runner.os != 'Windows'
+          ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
+        if: runner.os == 'macOS'
 
       - name: package (windows)
         run: |
