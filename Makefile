@@ -56,6 +56,7 @@ package-linux:
 		package=age-plugin-se-v$(VERSION)-$$arch-linux; \
 		make RELEASE=1 PREFIX=/usr DESTDIR=.build/$$package SWIFT_EXTRA_BUILD_FLAGS="--swift-sdk $$arch-swift-linux-musl" all install; \
 		tar czf .build/$$package.tgz -C .build $$package; \
+		go run Scripts/alpine/dir2apk.go --arch=$$arch --key=Scripts/alpine/r@mko.re-66596f64.rsa --out=.build .build/$$package; \
 	done
 else
 package:
