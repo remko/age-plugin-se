@@ -25,7 +25,7 @@ jobs:
         # We don't have swift-format on Linux yet
         if: runner.os == 'macOS'
       # Temporarily run this in the build to avoid surprises at release time
-      - uses: actions/setup-go@v2
+      - uses: actions/setup-go@v5
         if: runner.os == 'macOS'
       - run: |
           echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
