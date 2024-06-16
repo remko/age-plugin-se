@@ -1,6 +1,3 @@
-> *⭐️ If you use this plugin, consider starring it on GitHub so it can be
-> submitted to Homebrew core*
-
 # Age plugin for Apple's Secure Enclave
 
 [![Build](https://github.com/remko/age-plugin-se/actions/workflows/build-main.yml/badge.svg)](https://github.com/remko/age-plugin-se/actions/workflows/build-main.yml)
