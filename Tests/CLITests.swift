@@ -36,8 +36,42 @@ final class OptionsTests: XCTestCase {
       "_", "recipients", "--output=recipients.txt", "--input=identity.txt",
     ])
     XCTAssertEqual(.recipients, options.command)
+    XCTAssertEqual(.se, options.recipientType)
     XCTAssertEqual("identity.txt", options.input)
     XCTAssertEqual("recipients.txt", options.output)
+  }
+
+  func testParse_Recipients_P256TagRecipientType() throws {
+    let options = try Options.parse([
+      "_", "recipients", "--recipient-type=p256tag", "--output=recipients.txt",
+      "--input=identity.txt",
+    ])
+    XCTAssertEqual(.recipients, options.command)
+    XCTAssertEqual(.p256tag, options.recipientType)
+    XCTAssertEqual("identity.txt", options.input)
+    XCTAssertEqual("recipients.txt", options.output)
+  }
+
+  func testParse_Recipients_SERecipientType() throws {
+    let options = try Options.parse([
+      "_", "recipients", "--recipient-type=se", "--output=recipients.txt", "--input=identity.txt",
+    ])
+    XCTAssertEqual(.recipients, options.command)
+    XCTAssertEqual(.se, options.recipientType)
+    XCTAssertEqual("identity.txt", options.input)
+    XCTAssertEqual("recipients.txt", options.output)
+  }
+
+  func testParse_Recipients_InvalidRecipientType() throws {
+    XCTAssertThrowsError(
+      try Options.parse([
+        "_", "recipients", "--recipient-type=invalid", "--output=recipients.txt",
+        "--input=identity.txt",
+      ])
+    ) { error in
+      XCTAssertEqual(
+        Options.Error.invalidValue("--recipient-type", "invalid"), error as! Options.Error)
+    }
   }
 
   func testParse_Recipients_NoOptions() throws {

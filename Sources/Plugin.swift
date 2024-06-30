@@ -15,7 +15,9 @@ class Plugin {
     self.stream = stream
   }
 
-  func generateKey(accessControl: KeyAccessControl, now: Date) throws -> (String, String) {
+  func generateKey(accessControl: KeyAccessControl, recipientType: RecipientType, now: Date) throws
+    -> (String, String)
+  {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
@@ -54,7 +56,7 @@ class Plugin {
     #endif
 
     let privateKey = try crypto.newSecureEnclavePrivateKey(accessControl: secAccessControl)
-    let recipient = privateKey.publicKey.ageRecipient
+    let recipient = privateKey.publicKey.ageRecipient(type: recipientType)
     let identity = privateKey.ageIdentity
     let accessControlStr: String
     switch accessControl {
@@ -77,7 +79,7 @@ class Plugin {
     return (contents, recipient)
   }
 
-  func generateRecipients(input: String) throws -> String {
+  func generateRecipients(input: String, recipientType: RecipientType) throws -> String {
     var recipients: [String] = []
     for l in input.split(whereSeparator: \.isNewline) {
       if l.hasPrefix("#") {
@@ -85,7 +87,7 @@ class Plugin {
       }
       let sl = String(l.trimmingCharacters(in: .whitespacesAndNewlines))
       let privateKey = try newSecureEnclavePrivateKey(ageIdentity: sl, crypto: self.crypto)
-      recipients.append(privateKey.publicKey.ageRecipient)
+      recipients.append(privateKey.publicKey.ageRecipient(type: recipientType))
     }
     return recipients.joined(separator: "\n")
   }
@@ -115,10 +117,14 @@ class Plugin {
     // Phase 2
     var stanzas: [Stanza] = []
     var errors: [Stanza] = []
-    var recipientKeys: [P256.KeyAgreement.PublicKey] = []
+    var recipientKeys: [(P256.KeyAgreement.PublicKey, RecipientStanzaType)] = []
     for (index, recipient) in recipients.enumerated() {
       do {
-        recipientKeys.append(try P256.KeyAgreement.PublicKey(ageRecipient: recipient))
+        recipientKeys.append(
+          (
+            (try P256.KeyAgreement.PublicKey(ageRecipient: recipient)),
+            recipient.starts(with: "age1p256tag1") ? .p256tag : .pivp256
+          ))
       } catch {
         errors.append(
           Stanza(error: "recipient", args: [String(index)], message: error.localizedDescription))
@@ -127,14 +133,17 @@ class Plugin {
     for (index, identity) in identities.enumerated() {
       do {
         recipientKeys.append(
-          (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)).publicKey)
+          (
+            (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)).publicKey,
+            .pivp256
+          ))
       } catch {
         errors.append(
           Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
       }
     }
     for (index, fileKey) in fileKeys.enumerated() {
-      for recipientKey in recipientKeys {
+      for (recipientKey, recipientStanzaType) in recipientKeys {
         do {
           let ephemeralSecretKey = self.crypto.newEphemeralPrivateKey()
           let ephemeralPublicKeyBytes = ephemeralSecretKey.publicKey.compressedRepresentation
@@ -145,25 +154,45 @@ class Plugin {
           // Compresed representation cannot be the identity point anyway (?)
           // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
           // to explicitly check this here.
-          let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(with: recipientKey)
+          let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(
+            with: recipientKey)
           let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
-          let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
-            using: SHA256.self, salt: salt,
-            sharedInfo: Data("piv-p256".utf8),
-            outputByteCount: 32
-          )
+          let wrapKey =
+            recipientStanzaType == .p256tag
+            ? sharedSecret.hkdfDerivedSymmetricKey(
+              using: SHA256.self,
+              salt: Data("p256tag".utf8),
+              sharedInfo: salt,
+              outputByteCount: 32)
+            : sharedSecret.hkdfDerivedSymmetricKey(
+              using: SHA256.self, salt: salt,
+              sharedInfo: Data("piv-p256".utf8),
+              outputByteCount: 32
+            )
           let sealedBox = try ChaChaPoly.seal(
             fileKey, using: wrapKey, nonce: try! ChaChaPoly.Nonce(data: Data(count: 12)))
           stanzas.append(
-            Stanza(
-              type: "recipient-stanza",
-              args: [
-                String(index),
-                "piv-p256",
-                recipientKey.tag.base64RawEncodedString,
-                ephemeralPublicKeyBytes.base64RawEncodedString,
-              ], body: sealedBox.ciphertext + sealedBox.tag
-            ))
+            recipientStanzaType == .pivp256
+              ? Stanza(
+                type: "recipient-stanza",
+                args: [
+                  String(index),
+                  "piv-p256",
+                  recipientKey.sha256Tag.base64RawEncodedString,
+                  ephemeralPublicKeyBytes.base64RawEncodedString,
+                ], body: sealedBox.ciphertext + sealedBox.tag
+              )
+              : Stanza(
+                type: "recipient-stanza",
+                args: [
+                  String(index),
+                  "p256tag",
+                  recipientKey.hmacTag(using: SymmetricKey(data: ephemeralPublicKeyBytes))
+                    .base64RawEncodedString,
+                  ephemeralPublicKeyBytes.base64RawEncodedString,
+                ], body: sealedBox.ciphertext + sealedBox.tag
+              )
+          )
         } catch {
           errors.append(
             Stanza(error: "internal", args: [], message: error.localizedDescription))
@@ -217,7 +246,7 @@ class Plugin {
       for recipientStanza in recipientStanzas {
         let fileIndex = Int(recipientStanza.args[0])!
         switch recipientStanza.args[1] {
-        case "piv-p256":
+        case "piv-p256", "p256tag":
           if recipientStanza.args.count != 4 {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)], message: "incorrect argument count")
@@ -253,18 +282,22 @@ class Plugin {
         if fileResponses[fileIndex] != nil {
           continue
         }
-        let type = recipientStanza.args[1]
-        if type != "piv-p256" {
+        guard let type = RecipientStanzaType(rawValue: recipientStanza.args[1]) else {
           continue
         }
         let tag = recipientStanza.args[2]
         let share = recipientStanza.args[3]
         for identity in identityKeys {
-          if identity.publicKey.tag.base64RawEncodedString != tag {
-            continue
-          }
           do {
             let shareKeyData = Data(base64RawEncoded: share)!
+            let identityTag =
+              type == .p256tag
+              ? identity.publicKey.hmacTag(using: SymmetricKey(data: shareKeyData))
+                .base64RawEncodedString : identity.publicKey.sha256Tag.base64RawEncodedString
+            if identityTag != tag {
+              continue
+            }
+
             let shareKey: P256.KeyAgreement.PublicKey = try P256.KeyAgreement.PublicKey(
               compressedRepresentation: shareKeyData)
             // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
@@ -278,11 +311,19 @@ class Plugin {
               with: shareKey)
             let salt =
               shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
-            let wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
-              using: SHA256.self, salt: salt,
-              sharedInfo: Data("piv-p256".utf8),
-              outputByteCount: 32
-            )
+            let wrapKey =
+              type == .p256tag
+              ? sharedSecret.hkdfDerivedSymmetricKey(
+                using: SHA256.self,
+                salt: Data("p256tag".utf8),
+                sharedInfo: salt,
+                outputByteCount: 32
+              )
+              : sharedSecret.hkdfDerivedSymmetricKey(
+                using: SHA256.self, salt: salt,
+                sharedInfo: Data("piv-p256".utf8),
+                outputByteCount: 32
+              )
             let unwrappedKey = try ChaChaPoly.open(
               ChaChaPoly.SealedBox(
                 combined: try! ChaChaPoly.Nonce(data: Data(count: 12)) + recipientStanza.body),
@@ -390,21 +431,36 @@ enum KeyAccessControl {
   case currentBiometryAndPasscode
 }
 
+enum RecipientType: String {
+  case se = "se"
+  case p256tag = "p256tag"
+}
+
+enum RecipientStanzaType: String {
+  case p256tag = "p256tag"
+  case pivp256 = "piv-p256"
+}
+
 extension P256.KeyAgreement.PublicKey {
   init(ageRecipient: String) throws {
     let id = try Bech32().decode(ageRecipient)
-    if id.hrp != "age1se" {
+    if id.hrp != "age1se" && id.hrp != "age1p256tag" {
       throw Plugin.Error.unknownHRP(id.hrp)
     }
     self = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
   }
 
-  var tag: Data {
+  var sha256Tag: Data {
     return Data(SHA256.hash(data: compressedRepresentation).prefix(4))
   }
 
-  var ageRecipient: String {
-    return Bech32().encode(hrp: "age1se", data: self.compressedRepresentation)
+  func hmacTag(using: SymmetricKey) -> Data {
+    return Data(
+      HMAC<SHA256>.authenticationCode(for: compressedRepresentation, using: using).prefix(4))
+  }
+
+  func ageRecipient(type: RecipientType) -> String {
+    return Bech32().encode(hrp: "age1\(type.rawValue)", data: self.compressedRepresentation)
   }
 }
 

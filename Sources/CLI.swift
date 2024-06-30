@@ -15,7 +15,8 @@ struct CLI {
         print(version)
       case .keygen:
         let result = try plugin.generateKey(
-          accessControl: options.accessControl.keyAccessControl, now: Date())
+          accessControl: options.accessControl.keyAccessControl,
+          recipientType: options.recipientType.recipientType, now: Date())
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
@@ -34,7 +35,8 @@ struct CLI {
         } else {
           input = try String(data: FileHandle.standardInput.readToEnd()!, encoding: .utf8)!
         }
-        let result = try plugin.generateRecipients(input: input)
+        let result = try plugin.generateRecipients(
+          input: input, recipientType: options.recipientType.recipientType)
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
@@ -116,6 +118,20 @@ struct Options {
   }
   var accessControl = AccessControl.anyBiometryOrPasscode
 
+  enum RecipientType: String {
+    case se = "se"
+    case p256tag = "p256tag"
+
+    var recipientType: age_plugin_se.RecipientType {
+      switch self {
+      case .se: return .se
+      case .p256tag: return .p256tag
+      }
+    }
+  }
+
+  var recipientType: RecipientType = .se
+
   static let help =
     """
     Usage:
@@ -171,7 +187,7 @@ struct Options {
         opts.command = .version
         break
       } else if [
-        "--age-plugin", "-i", "--input", "-o", "--output", "--access-control",
+        "--age-plugin", "-i", "--input", "-o", "--output", "--access-control", "--recipient-type",
       ].contains(where: {
         arg == $0 || arg.hasPrefix($0 + "=")
       }) {
@@ -198,6 +214,9 @@ struct Options {
         case "--access-control":
           opts.accessControl =
             try AccessControl(rawValue: value) ?? { throw Error.invalidValue(arg, value) }()
+        case "--recipient-type":
+          opts.recipientType =
+            try RecipientType(rawValue: value) ?? { throw Error.invalidValue(arg, value) }()
         default:
           assert(false)
         }

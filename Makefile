@@ -41,7 +41,7 @@ MAN_TARGET := man
 endif
 
 .PHONY: all
-all: $(MAN_TARGET)
+all: $(BUILD_DIR)/age-plugin-p256tag $(MAN_TARGET)
 	swift build $(SWIFT_BUILD_FLAGS)
 
 .PHONY: package
@@ -104,12 +104,16 @@ man: .build/age-plugin-se.1
 	cat $< | sed "s/@VERSION@/$(VERSION)/g" | scdoc > $@.tmp
 	mv $@.tmp $@
 
+$(BUILD_DIR)/age-plugin-p256tag:
+	mkdir -p $(BUILD_DIR)
+	ln -sf age-plugin-se $@
+
 
 .PHONY: smoke-test
 smoke-test:
 	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
-	recipient=`age-plugin-se keygen --access-control=any-biometry -o key.txt | sed -e "s/Public key: //"` && \
+	recipient=`age-plugin-se keygen $(TEST_KEYGEN_FLAGS) --access-control=any-biometry -o key.txt | sed -e "s/Public key: //"` && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
 	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
 	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
@@ -120,7 +124,7 @@ smoke-test:
 smoke-test-noninteractive:
 	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
-	recipient=`age-plugin-se keygen --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
+	recipient=`age-plugin-se keygen $(TEST_KEYGEN_FLAGS) --access-control=none -o key.txt | sed -e "s/Public key: //"` && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
 	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
 	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
@@ -131,7 +135,7 @@ smoke-test-noninteractive:
 smoke-test-encrypt:
 	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting...' && \
-	($(ECHO) "test" | $(AGE) --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age) && \
+	($(ECHO) "test" | $(AGE) --encrypt $(TEST_KEYGEN_FLAGS) --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age) && \
 	$(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' && \
 	rm -f secret.txt.age
 
@@ -155,7 +159,7 @@ gen-manual-tests:
 	mkdir -p manual-tests
 	PATH="$(BUILD_DIR):$$PATH" && set -e && \
 	for control in none passcode current-biometry any-biometry current-biometry-and-passcode any-biometry-and-passcode any-biometry-or-passcode; do \
-		recipient=`age-plugin-se keygen --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
+		recipient=`age-plugin-se keygen $(TEST_KEYGEN_FLAGS) --access-control=$$control -o manual-tests/key.$$control.txt | sed -e "s/Public key: //"`;\
 		($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o manual-tests/secret.txt.$$control.age); \
 	done
 
