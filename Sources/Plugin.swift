@@ -156,42 +156,25 @@ class Plugin {
           // to explicitly check this here.
           let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(
             with: recipientKey)
-          let salt = ephemeralPublicKeyBytes + recipientKey.compressedRepresentation
-          let wrapKey =
-            recipientStanzaType == .p256tag
-            ? sharedSecret.hkdfDerivedSymmetricKey(
-              using: SHA256.self,
-              salt: Data("p256tag".utf8),
-              sharedInfo: salt,
-              outputByteCount: 32)
-            : sharedSecret.hkdfDerivedSymmetricKey(
-              using: SHA256.self, salt: salt,
-              sharedInfo: Data("piv-p256".utf8),
-              outputByteCount: 32
-            )
           let sealedBox = try ChaChaPoly.seal(
-            fileKey, using: wrapKey, nonce: try! ChaChaPoly.Nonce(data: Data(count: 12)))
+            fileKey,
+            using: recipientStanzaWrapKey(
+              using: sharedSecret,
+              salt: ephemeralPublicKeyBytes + recipientKey.compressedRepresentation,
+              type: recipientStanzaType
+            ), nonce: try! ChaChaPoly.Nonce(data: Data(count: 12)))
           stanzas.append(
-            recipientStanzaType == .pivp256
-              ? Stanza(
-                type: "recipient-stanza",
-                args: [
-                  String(index),
-                  "piv-p256",
-                  recipientKey.sha256Tag.base64RawEncodedString,
-                  ephemeralPublicKeyBytes.base64RawEncodedString,
-                ], body: sealedBox.ciphertext + sealedBox.tag
-              )
-              : Stanza(
-                type: "recipient-stanza",
-                args: [
-                  String(index),
-                  "p256tag",
-                  recipientKey.hmacTag(using: SymmetricKey(data: ephemeralPublicKeyBytes))
-                    .base64RawEncodedString,
-                  ephemeralPublicKeyBytes.base64RawEncodedString,
-                ], body: sealedBox.ciphertext + sealedBox.tag
-              )
+            Stanza(
+              type: "recipient-stanza",
+              args: [
+                String(index),
+                recipientStanzaType.rawValue,
+                recipientStanzaType == .p256tag
+                  ? recipientKey.hmacTag(using: SymmetricKey(data: ephemeralPublicKeyBytes))
+                    .base64RawEncodedString : recipientKey.sha256Tag.base64RawEncodedString,
+                ephemeralPublicKeyBytes.base64RawEncodedString,
+              ], body: sealedBox.ciphertext + sealedBox.tag
+            )
           )
         } catch {
           errors.append(
@@ -309,25 +292,15 @@ class Plugin {
             // to explicitly check this here.
             let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(
               with: shareKey)
-            let salt =
-              shareKey.compressedRepresentation + identity.publicKey.compressedRepresentation
-            let wrapKey =
-              type == .p256tag
-              ? sharedSecret.hkdfDerivedSymmetricKey(
-                using: SHA256.self,
-                salt: Data("p256tag".utf8),
-                sharedInfo: salt,
-                outputByteCount: 32
-              )
-              : sharedSecret.hkdfDerivedSymmetricKey(
-                using: SHA256.self, salt: salt,
-                sharedInfo: Data("piv-p256".utf8),
-                outputByteCount: 32
-              )
             let unwrappedKey = try ChaChaPoly.open(
               ChaChaPoly.SealedBox(
                 combined: try! ChaChaPoly.Nonce(data: Data(count: 12)) + recipientStanza.body),
-              using: wrapKey)
+              using: recipientStanzaWrapKey(
+                using: sharedSecret,
+                salt: shareKey.compressedRepresentation
+                  + identity.publicKey.compressedRepresentation,
+                type: type
+              ))
             fileResponses[fileIndex] = Stanza(
               type: "file-key",
               args: [String(fileIndex)],
@@ -439,6 +412,26 @@ enum RecipientType: String {
 enum RecipientStanzaType: String {
   case p256tag = "p256tag"
   case pivp256 = "piv-p256"
+}
+
+func recipientStanzaWrapKey(
+  using sharedSecret: SharedSecret, salt: Data, type: RecipientStanzaType
+) -> SymmetricKey {
+  switch type {
+  case .p256tag:
+    return sharedSecret.hkdfDerivedSymmetricKey(
+      using: SHA256.self,
+      salt: Data("p256tag".utf8),
+      sharedInfo: salt,
+      outputByteCount: 32
+    )
+  case .pivp256:
+    return sharedSecret.hkdfDerivedSymmetricKey(
+      using: SHA256.self, salt: salt,
+      sharedInfo: Data("piv-p256".utf8),
+      outputByteCount: 32
+    )
+  }
 }
 
 extension P256.KeyAgreement.PublicKey {
