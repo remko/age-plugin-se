@@ -12,8 +12,9 @@ ifeq ($(RELEASE),1)
 SWIFT_BUILD_FLAGS=-c release --disable-sandbox $(SWIFT_EXTRA_BUILD_FLAGS)
 endif
 
+SWIFT_TEST_FLAGS := --parallel
 ifeq ($(COVERAGE),1)
-SWIFT_TEST_FLAGS=--enable-code-coverage
+SWIFT_TEST_FLAGS := $(SWIFT_TEST_FLAGS) --enable-code-coverage
 endif
 # E.g. Tests.RecipientV1Tests/testRecipient
 ifneq ($(TEST_FILTER),)
