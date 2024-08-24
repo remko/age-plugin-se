@@ -421,7 +421,7 @@ func recipientStanzaWrapKey(
   case .p256tag:
     return sharedSecret.hkdfDerivedSymmetricKey(
       using: SHA256.self,
-      salt: Data("p256tag".utf8),
+      salt: Data("age-encryption.org/v1/p256tag".utf8),
       sharedInfo: salt,
       outputByteCount: 32
     )

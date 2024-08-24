@@ -320,7 +320,7 @@ final class RecipientV1Tests: XCTestCase {
     XCTAssertEqual(
       """
       -> recipient-stanza 0 p256tag tHLLKQ Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      VG5zT3zAm86KYMVfdyWgJ+WDGOm42MAuXPBVkdDwC8E
+      eCnx6Ik2/6gX9M79e4+NQQ36GtZZj9qa6+pNlWjA1Nk
       -> done
 
       """, stream.output)
@@ -615,7 +615,7 @@ final class IdentityV1Tests: XCTestCase {
         -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
         -> recipient-stanza 0 p256tag tHLLKQ Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        VG5zT3zAm86KYMVfdyWgJ+WDGOm42MAuXPBVkdDwC8E
+        eCnx6Ik2/6gX9M79e4+NQQ36GtZZj9qa6+pNlWjA1Nk
         -> done
 
         -> ok
