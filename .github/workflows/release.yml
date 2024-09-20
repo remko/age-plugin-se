@@ -12,41 +12,17 @@ jobs:
 
   release:
     needs: build
-    strategy:
-      matrix:
-        os: [macos-13, windows-latest]
-    runs-on: ${{ matrix.os }}
+    runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ./.github/actions/setup
-
-      - run: make package
-        if: runner.os != 'Windows'
-
-      - uses: actions/setup-go@v5
+      - name: "Download artifacts"
+        uses: actions/download-artifact@v4
         with:
-          go-version: '>=1.22.0'
-        if: runner.os == 'macOS'
-      - run: |
-          echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
-          make package-linux
-        env:
-          TOOLCHAINS: swift
-          ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-        if: runner.os == 'macOS'
-
-      - name: package (windows)
-        run: |
-          $VERSION = Select-String -Path "Sources/CLI.Swift" -Pattern "^let version" | % {$_ -replace '.*"v(.*)"', "`$1" }
-          swift build -c release --static-swift-stdlib
-          $BINPATH = swift build -c release --static-swift-stdlib --show-bin-path
-          $ARCH = $Env:PROCESSOR_ARCHITECTURE.ToLower()
-          7z a -tzip ".build\age-plugin-se-v${VERSION}-${ARCH}-windows.zip" "$BINPATH\age-plugin-se.exe"
-        if: runner.os == 'Windows'
+          pattern: packages-*
+          path: packages
 
       - name: "Upload artifacts"
         run: |
-          for f in `find .build -maxdepth 1 -name 'age-plugin-se-*.tgz' -o -name 'age-plugin-se-*.zip' -o -name 'age-plugin-se-*.apk'`; do
+          for f in `find packages -depth 2 -name '*.tgz' -o -name '*.zip' -o -name '*.apk'`; do
             echo "Uploading: $f ($(file -b --mime-type $f))"
             curl --fail-with-body --retry-all-errors --retry 5 \
               -H "Authorization: token $GITHUB_TOKEN" \

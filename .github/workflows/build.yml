@@ -24,26 +24,42 @@ jobs:
       - run: make lint
         # We don't have swift-format on Linux yet
         if: runner.os == 'macOS'
-      # Temporarily run this in the build to avoid surprises at release time
+
+      # Packaging
       - uses: actions/setup-go@v5
         with:
           go-version: '>=1.22.0'
         if: runner.os == 'macOS'
-      - run: |
+      - name: Package
+        run: make package
+        if: runner.os != 'Windows'
+      - name: Package (Alpine)
+        run: |
           echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
           make package-linux
         env:
           TOOLCHAINS: swift
           ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
         if: runner.os == 'macOS'
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-${{matrix.os}}
+          path: |
+            .build/age-plugin-se-*.tgz
+            .build/age-plugin-se-*.zip
+            .build/age-plugin-se-*.apk
+          include-hidden-files: true
 
       # Build & upload site artifacts
       # Deploy happens in the `build-main` workflow, which only runs on main
-      - run: |
+      - name: Package site artifacts
+        run: |
           mkdir -p .build/site/ci
           cp .build/coverage.svg .build/coverage.html .build/site/ci
         shell: bash
-      - uses: actions/upload-pages-artifact@v3
+      - name: Upload site artifacts
+        uses: actions/upload-pages-artifact@v3
         with:
           path: .build/site
         if: runner.os == 'macOS'
@@ -62,3 +78,19 @@ jobs:
         run: |
           $Env:Path += ";" + (swift build --show-bin-path)
           echo "test" | age --encrypt --recipient age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o secret.txt.age
+      
+      # Packaging
+      - name: Package (Windows)
+        run: |
+          $VERSION = Select-String -Path "Sources/CLI.Swift" -Pattern "^let version" | % {$_ -replace '.*"v(.*)"', "`$1" }
+          swift build -c release --static-swift-stdlib
+          $BINPATH = swift build -c release --static-swift-stdlib --show-bin-path
+          $ARCH = $Env:PROCESSOR_ARCHITECTURE.ToLower()
+          7z a -tzip ".build\age-plugin-se-v${VERSION}-${ARCH}-windows.zip" "$BINPATH\age-plugin-se.exe"
+        if: runner.os == 'Windows'
+      - name: Upload packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: packages-windows-latest
+          path: .build/age-plugin-se-*.zip
+          include-hidden-files: true
