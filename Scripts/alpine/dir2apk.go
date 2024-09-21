@@ -19,9 +19,11 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -321,8 +323,8 @@ type PKGInfo map[string]string
 
 func (pi PKGInfo) Marshal() string {
 	x := ""
-	for k, v := range pi {
-		x += fmt.Sprintf("%s = %v\n", k, v)
+	for _, k := range slices.Sorted(maps.Keys(pi)) {
+		x += fmt.Sprintf("%s = %v\n", k, pi[k])
 	}
 	return x
 }
