@@ -9,7 +9,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto"
-	"crypto/rand"
 	"crypto/rsa"
 	"crypto/sha1"
 	"crypto/sha256"
@@ -119,6 +118,14 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 	signature, err := signHash(controlseg, keyfile)
 	if err != nil {
 		return err
+	}
+	// This shouldn't be necessary, but doing this to see if this is what happens in
+	// the GitHub build
+	if signature == nil {
+		panic("unexpected nil signature")
+	}
+	if len(signature) == 0 {
+		panic("unexpected null signature 2")
 	}
 	signatureseg, err := CreateTarSegment(fmt.Sprintf(".SIGN.RSA.%s.pub", path.Base(keyfile)), signature, buildtime)
 
@@ -326,9 +333,14 @@ func signHash(data []byte, keyfile string) ([]byte, error) {
 	}
 	key := parseResult.(*rsa.PrivateKey)
 
-	signature, err := rsa.SignPKCS1v15(rand.Reader, key, crypto.SHA1, hash)
+	signature, err := rsa.SignPKCS1v15(nil, key, crypto.SHA1, hash)
 	if err != nil {
 		return nil, err
+	}
+	// This shouldn't be necessary, but doing this to see if this is what happens in
+	// the GitHub build
+	if len(signature) == 0 {
+		panic("unexpected null signature 1")
 	}
 	return signature, nil
 }
