@@ -64,6 +64,13 @@ func doMain() error {
 	}
 
 	builddate := time.Now()
+	if os.Getenv("SOURCE_DATE_EPOCH") != "" {
+		sourcedate, err := strconv.ParseInt(os.Getenv("SOURCE_DATE_EPOCH"), 10, 0)
+		if err != nil {
+			return err
+		}
+		builddate = time.Unix(sourcedate, 0)
+	}
 
 	////////////////////////////////////////////////////////////////////////////////
 	// Base package
@@ -72,7 +79,7 @@ func doMain() error {
 	pkginfo := NewPKGInfo()
 	pkginfo["arch"] = *arch
 	pkginfo["builddate"] = strconv.FormatInt(builddate.UnixMilli(), 10)
-	if err := CreatePackage(pkginfo, rootdir, func(p string) bool { return !isDocPath(p) }, *outdir, *keyfile); err != nil {
+	if err := CreatePackage(pkginfo, rootdir, func(p string) bool { return !isDocPath(p) }, *outdir, *keyfile, builddate); err != nil {
 		return err
 	}
 
@@ -86,14 +93,14 @@ func doMain() error {
 	docpkginfo["pkgdesc"] = docpkginfo["pkgdesc"] + " (documentation)"
 	docpkginfo["install_if"] = fmt.Sprintf("docs %s=%s", docpkginfo["pkgname"], docpkginfo["pkgver"])
 	docpkginfo["pkgname"] = docpkginfo["pkgname"] + "-doc"
-	if err := CreatePackage(docpkginfo, rootdir, isDocPath, *outdir, *keyfile); err != nil {
+	if err := CreatePackage(docpkginfo, rootdir, isDocPath, *outdir, *keyfile, builddate); err != nil {
 		return err
 	}
 	return nil
 }
 
-func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool, outdir string, keyfile string) error {
-	datapath, size, err := CreateDataTarball(rootdir, pathfilter)
+func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool, outdir string, keyfile string, buildtime time.Time) error {
+	datapath, size, err := CreateDataTarball(rootdir, pathfilter, buildtime)
 	if err != nil {
 		return err
 	}
@@ -104,7 +111,7 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 		return err
 	}
 
-	controlseg, err := CreateTarSegment(".PKGINFO", []byte(pkginfo.Marshal()))
+	controlseg, err := CreateTarSegment(".PKGINFO", []byte(pkginfo.Marshal()), buildtime)
 	if err != nil {
 		return err
 	}
@@ -113,7 +120,7 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 	if err != nil {
 		return err
 	}
-	signatureseg, err := CreateTarSegment(fmt.Sprintf(".SIGN.RSA.%s.pub", path.Base(keyfile)), signature)
+	signatureseg, err := CreateTarSegment(fmt.Sprintf(".SIGN.RSA.%s.pub", path.Base(keyfile)), signature, buildtime)
 
 	data, err := os.Open(datapath)
 	if err != nil {
@@ -135,7 +142,7 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 	return nil
 }
 
-func CreateDataTarball(rootdir string, pathfilter func(string) bool) (string, int64, error) {
+func CreateDataTarball(rootdir string, pathfilter func(string) bool, buildtime time.Time) (string, int64, error) {
 	datafile, err := os.CreateTemp("", "apk-data")
 	if err != nil {
 		return "", 0, err
@@ -181,6 +188,9 @@ func CreateDataTarball(rootdir string, pathfilter func(string) bool) (string, in
 			if err != nil {
 				return err
 			}
+			header.AccessTime = buildtime
+			header.ModTime = buildtime
+			header.ChangeTime = buildtime
 			relpath, err := filepath.Rel(rootdir, dir)
 			if err != nil {
 				return err
@@ -195,6 +205,9 @@ func CreateDataTarball(rootdir string, pathfilter func(string) bool) (string, in
 		if err != nil {
 			return err
 		}
+		header.AccessTime = buildtime
+		header.ModTime = buildtime
+		header.ChangeTime = buildtime
 
 		relpath, err := filepath.Rel(rootdir, fpath)
 		if err != nil {
@@ -231,14 +244,17 @@ func CreateDataTarball(rootdir string, pathfilter func(string) bool) (string, in
 	return datafile.Name(), datasize, nil
 }
 
-func CreateTarSegment(filename string, contents []byte) ([]byte, error) {
+func CreateTarSegment(filename string, contents []byte, buildtime time.Time) ([]byte, error) {
 	tbuf := bytes.NewBuffer(nil)
 	tw := tar.NewWriter(tbuf)
 	defer tw.Close()
 	header := &tar.Header{
-		Name: filename,
-		Size: int64(len(contents)),
-		Mode: 0644,
+		Name:       filename,
+		Size:       int64(len(contents)),
+		Mode:       0644,
+		AccessTime: buildtime,
+		ModTime:    buildtime,
+		ChangeTime: buildtime,
 	}
 	if err := tw.WriteHeader(header); err != nil {
 		return nil, err
