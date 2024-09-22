@@ -124,9 +124,6 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 	if signature == nil {
 		panic("unexpected nil signature")
 	}
-	if len(signature) == 0 {
-		panic("unexpected null signature 2")
-	}
 	signatureseg, err := CreateTarSegment(fmt.Sprintf(".SIGN.RSA.%s.pub", path.Base(keyfile)), signature, buildtime)
 
 	data, err := os.Open(datapath)
@@ -325,7 +322,7 @@ func signHash(data []byte, keyfile string) ([]byte, error) {
 	}
 	block, _ := pem.Decode(keypem)
 	if block == nil {
-		return nil, err
+		return nil, fmt.Errorf("%s: no pem data found (%d bytes)", keyfile, keypem)
 	}
 	parseResult, err := x509.ParsePKCS8PrivateKey(block.Bytes)
 	if err != nil {
@@ -339,7 +336,7 @@ func signHash(data []byte, keyfile string) ([]byte, error) {
 	}
 	// This shouldn't be necessary, but doing this to see if this is what happens in
 	// the GitHub build
-	if len(signature) == 0 {
+	if signature == nil {
 		panic("unexpected null signature 1")
 	}
 	return signature, nil

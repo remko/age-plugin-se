@@ -6,6 +6,9 @@ on:
   pull_request:
   workflow_dispatch:
   workflow_call:
+    secrets:
+      ALPINE_KEY:
+        required: true
   schedule:
     - cron: "0 6 * * 6"
 
