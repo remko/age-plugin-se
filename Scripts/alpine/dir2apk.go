@@ -96,17 +96,24 @@ func doMain() error {
 
 	docpkginfo := NewPKGInfo()
 	docpkginfo["arch"] = "noarch"
-	docpkginfo["builddate"] = strconv.FormatInt(builddate.UnixMilli(), 10)
-	docpkginfo["pkgver"] = *version
-	docpkginfo["commit"] = *commit
-	docpkginfo["pkgdesc"] = docpkginfo["pkgdesc"] + " (documentation)"
-	docpkginfo["install_if"] = fmt.Sprintf("docs %s=%s", docpkginfo["pkgname"], docpkginfo["pkgver"])
-	docpkginfo["pkgname"] = docpkginfo["pkgname"] + "-doc"
+	docpkginfo["builddate"] = pkginfo["builddate"]
+	docpkginfo["pkgver"] = pkginfo["pkgver"]
+	docpkginfo["commit"] = pkginfo["commit"]
+	docpkginfo["pkgdesc"] = pkginfo["pkgdesc"] + " (documentation)"
+	docpkginfo["install_if"] = fmt.Sprintf("docs %s=%s", pkginfo["pkgname"], pkginfo["pkgver"])
+	docpkginfo["pkgname"] = pkginfo["pkgname"] + "-doc"
+
 	if err := CreatePackage(docpkginfo, rootdir, isDocPath, *outdir, *keyfile, builddate); err != nil {
 		return err
 	}
 	return nil
 }
+
+func isDocPath(path string) bool {
+	return strings.Contains(path, "/man/") || strings.Contains("/licenses/", path)
+}
+
+////////////////////////////////////////////////////////////////////////////////
 
 func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool, outdir string, keyfile string, buildtime time.Time) error {
 	datapath, size, err := CreateDataTarball(rootdir, pathfilter, buildtime)
@@ -150,6 +157,8 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 
 	return nil
 }
+
+////////////////////////////////////////////////////////////////////////////////
 
 func CreateDataTarball(rootdir string, pathfilter func(string) bool, buildtime time.Time) (string, int64, error) {
 	datafile, err := os.CreateTemp("", "apk-data")
@@ -282,10 +291,6 @@ func CreateTarSegment(filename string, contents []byte, buildtime time.Time) ([]
 	}
 	gzw.Close()
 	return gzbuf.Bytes(), nil
-}
-
-func isDocPath(path string) bool {
-	return strings.Contains(path, "/man/") || strings.Contains("/licenses/", path)
 }
 
 ////////////////////////////////////////////////////////////////////////////////
