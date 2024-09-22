@@ -29,8 +29,10 @@ endif
 
 VERSION ?= $(shell cat Sources/CLI.swift | grep '^let version' | sed -e "s/.*\"v\\(.*\\)\".*/\\1/")
 BUILD_DIR ?= $(shell swift build $(SWIFT_BUILD_FLAGS) --show-bin-path)
+COMMIT_SHA=$(shell git rev-parse HEAD)
 PACKAGE_ARCHS = arm64-apple-macosx x86_64-apple-macosx
 PACKAGE_LINUX_ARCHS = aarch64 x86_64
+APK_PACKAGE_VERSION=r0
 
 ECHO = echo
 ifneq ($(UNAME_S),Darwin)
@@ -57,7 +59,7 @@ package-linux:
 		package=age-plugin-se-v$(VERSION)-$$arch-linux; \
 		make RELEASE=1 PREFIX=/usr DESTDIR=.build/$$package SWIFT_EXTRA_BUILD_FLAGS="--swift-sdk $$arch-swift-linux-musl" all install; \
 		tar czf .build/$$package.tgz -C .build $$package; \
-		go run Scripts/alpine/dir2apk.go --arch=$$arch --key=Scripts/alpine/r@mko.re-66596f64.rsa --out=.build .build/$$package; \
+		go run Scripts/alpine/dir2apk.go --arch=$$arch --version=$(VERSION)-$(APK_PACKAGE_VERSION) --commit=$(COMMIT_SHA) --key=Scripts/alpine/r@mko.re-66596f64.rsa --out=.build .build/$$package; \
 	done
 else
 package:

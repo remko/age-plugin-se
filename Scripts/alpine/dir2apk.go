@@ -31,13 +31,11 @@ import (
 func NewPKGInfo() PKGInfo {
 	return PKGInfo{
 		"pkgname":    "age-plugin-se",
-		"pkgver":     "0.1.4-r0",
 		"pkgdesc":    "age plugin for Apple's Secure Enclave",
 		"url":        "https://github.com/remko/age-plugin-se",
 		"maintainer": "Remko Tronçon <r@mko.re>",
 		"packager":   "Remko Tronçon <r@mko.re>",
 		"origin":     "age-plugin-se",
-		"commit":     "3bb554e284d9e685b3f3fb07ae5c294d5ec7c6dd",
 		"license":    "MIT",
 	}
 }
@@ -46,6 +44,8 @@ func doMain() error {
 	arch := flag.String("arch", "", "")
 	keyfile := flag.String("key", "", "")
 	outdir := flag.String("out", "", "")
+	commit := flag.String("commit", "", "")
+	version := flag.String("version", "", "")
 	flag.Parse()
 	rootdir := flag.Arg(0)
 
@@ -57,6 +57,12 @@ func doMain() error {
 	}
 	if *outdir == "" {
 		return fmt.Errorf("missing out")
+	}
+	if *commit == "" {
+		return fmt.Errorf("missing commit")
+	}
+	if *version == "" {
+		return fmt.Errorf("missing version")
 	}
 	if rootdir == "" {
 		return fmt.Errorf("missing dir")
@@ -78,6 +84,8 @@ func doMain() error {
 	pkginfo := NewPKGInfo()
 	pkginfo["arch"] = *arch
 	pkginfo["builddate"] = strconv.FormatInt(builddate.UnixMilli(), 10)
+	pkginfo["pkgver"] = *version
+	pkginfo["commit"] = *commit
 	if err := CreatePackage(pkginfo, rootdir, func(p string) bool { return !isDocPath(p) }, *outdir, *keyfile, builddate); err != nil {
 		return err
 	}
@@ -89,6 +97,8 @@ func doMain() error {
 	docpkginfo := NewPKGInfo()
 	docpkginfo["arch"] = "noarch"
 	docpkginfo["builddate"] = strconv.FormatInt(builddate.UnixMilli(), 10)
+	docpkginfo["pkgver"] = *version
+	docpkginfo["commit"] = *commit
 	docpkginfo["pkgdesc"] = docpkginfo["pkgdesc"] + " (documentation)"
 	docpkginfo["install_if"] = fmt.Sprintf("docs %s=%s", docpkginfo["pkgname"], docpkginfo["pkgver"])
 	docpkginfo["pkgname"] = docpkginfo["pkgname"] + "-doc"
@@ -118,11 +128,6 @@ func CreatePackage(pkginfo PKGInfo, rootdir string, pathfilter func(string) bool
 	signature, err := signHash(controlseg, keyfile)
 	if err != nil {
 		return err
-	}
-	// This shouldn't be necessary, but doing this to see if this is what happens in
-	// the GitHub build
-	if signature == nil {
-		panic("unexpected nil signature")
 	}
 	signatureseg, err := CreateTarSegment(fmt.Sprintf(".SIGN.RSA.%s.pub", path.Base(keyfile)), signature, buildtime)
 
@@ -333,11 +338,6 @@ func signHash(data []byte, keyfile string) ([]byte, error) {
 	signature, err := rsa.SignPKCS1v15(nil, key, crypto.SHA1, hash)
 	if err != nil {
 		return nil, err
-	}
-	// This shouldn't be necessary, but doing this to see if this is what happens in
-	// the GitHub build
-	if signature == nil {
-		panic("unexpected null signature 1")
 	}
 	return signature, nil
 }
