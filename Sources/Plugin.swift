@@ -74,6 +74,7 @@ class Plugin {
       # access control: \(accessControlStr)
       # public key: \(recipient)
       \(identity)
+
       """
 
     return (contents, recipient)

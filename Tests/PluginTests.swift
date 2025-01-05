@@ -64,6 +64,7 @@ final class GenerateKeyTests: XCTestCase {
       # access control: any biometry or passcode
       # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
       AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
       """, result.0)
     XCTAssertEqual(
       "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
@@ -81,6 +82,7 @@ final class GenerateKeyTests: XCTestCase {
       # access control: any biometry and passcode
       # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
       AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
       """, result.0)
     XCTAssertEqual(
       "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
@@ -97,6 +99,7 @@ final class GenerateKeyTests: XCTestCase {
       # access control: current biometry
       # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
       AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
       """, result.0)
     XCTAssertEqual(
       "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
@@ -127,6 +130,7 @@ final class GenerateKeyTests: XCTestCase {
       # access control: any biometry or passcode
       # public key: age1p256tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kfhdut2
       AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
       """, result.0)
     XCTAssertEqual(
       "age1p256tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kfhdut2", result.1)
