@@ -9,8 +9,8 @@ Enclave](https://support.apple.com/en-gb/guide/security/sec59b0b31ff/web).
 
     $ age-plugin-se keygen --access-control=any-biometry -o key.txt
     Public key: age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp
-    $ tar cvz ~/data | age -r age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp > data.tar.gz.age
-    $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+    $ tar cvz ~/data | age -r age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp -o data.tar.gz.age
+    $ age --decrypt -i key.txt -o data.tar.gz data.tar.gz.age
 
 <div align="center">
 <img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
@@ -122,7 +122,7 @@ Using the public key, you can now encrypt data from any machine (even machines
 without a Secure Enclave, or even machines running Linux or Windows):
 
 ```
-$ tar cvz ~/data | age -r age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak
+$ tar cvz ~/data | age -r age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak -o data.tar.gz.age
 ```
 
 age will automatically pick up the plugin from your execution path, and detect that it
@@ -132,7 +132,7 @@ To decrypt the encrypted file, pass the private key as an identity to age
 (running on the machine with the corresponding Secure Enclave for the private key):
 
 ```
-$ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
+$ age --decrypt -i key.txt -o data.tar.gz data.tar.gz.age
 ```
 
 The decrypt operation will now require Touch ID to use the 
