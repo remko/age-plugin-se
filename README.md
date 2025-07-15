@@ -142,6 +142,74 @@ Secure Enclave to decrypt it:
 <img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
 </div>
 
+
+### Using `age-plugin-se` with [passage](https://github.com/FiloSottile/passage)
+
+First, generate a new private key for passage:
+
+```
+$ age-plugin-se keygen -o $HOME/.passage/identities
+Public key: age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp
+```
+
+Because this key is bound to your device, and your device may break or get lost, 
+it's a good idea to also generate a backup key (for example, a password-protected one):
+
+```
+$ age-keygen | age -p > $HOME/.passage/identities.backup
+Public key: age1szwgh3vau33786pdp77yl2rx9hdl9p9v6t5aynzv9jepv2lqys6q24pcc4
+```
+
+Configure your store to encrypt all entries to both keys:
+
+```
+$ cat << EOF > $HOME/.passage/store/.age-recipients
+# Backup key
+age1szwgh3vau33786pdp77yl2rx9hdl9p9v6t5aynzv9jepv2lqys6q24pcc4
+
+# Secure Enclave key
+age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp
+EOF
+```
+
+Decrypting your passage entries will now ask for touch ID.
+
+If you should ever lose access to the device bound to your private key:
+
+1. Generate a new `age-plugin-se` key:
+
+   ```
+   $ age-plugin-se keygen -o $HOME/.passage/identities.new
+   Public key: age1se1qfs057x89v9fs2g2thcw3xlg0729q63ntrgwc9t29t54q5l93de2cq6t02s
+   ```
+
+2. Add the new public key to `.age-identities`:
+
+   ```
+   echo age1se1qfs057x89v9fs2g2thcw3xlg0729q63ntrgwc9t29t54q5l93de2cq6t02s >> \
+     $HOME/.passage/store/.age-recipients
+   ```
+    
+3. Decrypt your backup key (to speed up re-encryption), and temporarily use it as your 
+   identity for decrypting entries:
+
+   ```
+   age -d $HOME/.passage/identities.backup > $HOME/.passage/identities
+   ```
+
+4. Re-encrypt your passage store:
+
+   ```
+   passage reencrypt
+   ```
+
+5. Use your new key for decrypting entries in the future:
+
+   ```
+   mv $HOME/.passage/identities.new $HOME/.passage/identities
+   ```
+
+
 ### Converting `age-plugin-se` recipients to `age-plugin-yubikey` recipients
 
 `age-plugin-se` recipients can be converted to
@@ -167,7 +235,6 @@ This key can now be used to encrypt data for the same private key:
 $ tar cvz ~/data | age -r age1yubikey1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
 $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 ```
-
 
 
 ## Usage
