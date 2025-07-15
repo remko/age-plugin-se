@@ -143,9 +143,13 @@ Secure Enclave to decrypt it:
 </div>
 
 
-### Using `age-plugin-se` with [passage](https://github.com/FiloSottile/passage)
+### Using `age-plugin-se` with passage
 
-First, generate a new private key for passage:
+[Passage](https://github.com/FiloSottile/passage) is a simple, file-based password manager that
+uses age for encrypting and decrypting secrets. Using `age-plugin-se` makes decrypting secrets
+in passage simple and convenient through Touch ID.
+
+To use `age-plugin-se` with passage, start by creating a new private key:
 
 ```
 $ age-plugin-se keygen -o $HOME/.passage/identities
@@ -153,7 +157,8 @@ Public key: age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp
 ```
 
 Because this key is bound to your device, and your device may break or get lost, 
-it's a good idea to also generate a backup key (for example, a password-protected one):
+it's a good idea to also generate a regular age backup key (for example, a 
+password-protected one):
 
 ```
 $ age-keygen | age -p > $HOME/.passage/identities.backup
@@ -172,7 +177,7 @@ age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp
 EOF
 ```
 
-Decrypting your passage entries will now ask for touch ID.
+Decrypting your passage entries will now ask for Touch ID.
 
 If you should ever lose access to the device bound to your private key:
 
