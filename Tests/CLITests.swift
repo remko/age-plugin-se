@@ -43,11 +43,11 @@ final class OptionsTests: XCTestCase {
 
   func testParse_Recipients_P256TagRecipientType() throws {
     let options = try Options.parse([
-      "_", "recipients", "--recipient-type=p256tag", "--output=recipients.txt",
+      "_", "recipients", "--recipient-type=tag", "--output=recipients.txt",
       "--input=identity.txt",
     ])
     XCTAssertEqual(.recipients, options.command)
-    XCTAssertEqual(.p256tag, options.recipientType)
+    XCTAssertEqual(.tag, options.recipientType)
     XCTAssertEqual("identity.txt", options.input)
     XCTAssertEqual("recipients.txt", options.output)
   }

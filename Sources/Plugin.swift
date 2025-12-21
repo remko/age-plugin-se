@@ -124,7 +124,7 @@ class Plugin {
         recipientKeys.append(
           (
             (try P256.KeyAgreement.PublicKey(ageRecipient: recipient)),
-            recipient.starts(with: "age1p256tag1") ? .p256tag : .pivp256
+            recipient.starts(with: "age1tag1") ? .p256tag : .pivp256
           ))
       } catch {
         errors.append(
@@ -146,34 +146,60 @@ class Plugin {
     for (index, fileKey) in fileKeys.enumerated() {
       for (recipientKey, recipientStanzaType) in recipientKeys {
         do {
-          let ephemeralSecretKey = self.crypto.newEphemeralPrivateKey()
-          let ephemeralPublicKeyBytes = ephemeralSecretKey.publicKey.compressedRepresentation
-          // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
-          // these keys can't be used in any operation. This is undocumented, but a documentation request
-          // has been filed as FB11989432.
-          // Swift Crypto PublicKeys cannot be the identity point by construction.
-          // Compresed representation cannot be the identity point anyway (?)
-          // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
-          // to explicitly check this here.
-          let sharedSecret = try ephemeralSecretKey.sharedSecretFromKeyAgreement(
-            with: recipientKey)
-          let sealedBox = try ChaChaPoly.seal(
-            fileKey,
-            using: recipientStanzaWrapKey(
-              using: sharedSecret,
-              salt: ephemeralPublicKeyBytes + recipientKey.compressedRepresentation,
-              type: recipientStanzaType
-            ), nonce: try! ChaChaPoly.Nonce(data: Data(count: 12)))
+          let skE = self.crypto.newEphemeralPrivateKey()
+          var tag: Data
+          var nonce: ChaChaPoly.Nonce
+          var wrapKey: SymmetricKey
+          var pkEBytes: Data
+
+          switch recipientStanzaType {
+          case .pivp256:
+            pkEBytes = skE.publicKey.compressedRepresentation
+            tag = recipientKey.sha256Tag
+            nonce = try! ChaChaPoly.Nonce(data: Data(count: 12))
+
+            // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
+            // these keys can't be used in any operation. This is undocumented, but a documentation request
+            // has been filed as FB11989432.
+            // Swift Crypto PublicKeys cannot be the identity point by construction.
+            // Compresed representation cannot be the identity point anyway (?)
+            // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
+            // to explicitly check this here.
+            let sharedSecret = try skE.sharedSecretFromKeyAgreement(
+              with: recipientKey)
+            wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
+              using: SHA256.self, salt: pkEBytes + recipientKey.compressedRepresentation,
+              sharedInfo: Data("piv-p256".utf8),
+              outputByteCount: 32
+            )
+
+          case .p256tag:
+            pkEBytes = skE.publicKey.x963Representation
+            tag = recipientKey.hkdfTag(using: pkEBytes)
+
+            // DHKEM-P256 encapsulation
+            let sharedSecret = HPKE.extractAndExpand(
+              suiteID: "KEM".data(using: .utf8)! + Data([0x00, 0x10]),
+              dh: (try skE.sharedSecretFromKeyAgreement(with: recipientKey)).withUnsafeBytes {
+                Data($0)
+              },
+              kemContext: pkEBytes + recipientKey.x963Representation,
+              nSecret: 32)
+            (wrapKey, nonce) = HPKE.context(
+              kem: .dhkemP256,
+              sharedSecret: sharedSecret.withUnsafeBytes { Data($0) },
+              info: "age-encryption.org/p256tag".data(using: .utf8)!)
+          }
+
+          let sealedBox = try ChaChaPoly.seal(fileKey, using: wrapKey, nonce: nonce)
           stanzas.append(
             Stanza(
               type: "recipient-stanza",
               args: [
                 String(index),
                 recipientStanzaType.rawValue,
-                recipientStanzaType == .p256tag
-                  ? recipientKey.hmacTag(using: SymmetricKey(data: ephemeralPublicKeyBytes))
-                    .base64RawEncodedString : recipientKey.sha256Tag.base64RawEncodedString,
-                ephemeralPublicKeyBytes.base64RawEncodedString,
+                tag.base64RawEncodedString(),
+                pkEBytes.base64RawEncodedString(),
               ], body: sealedBox.ciphertext + sealedBox.tag
             )
           )
@@ -243,7 +269,9 @@ class Plugin {
             continue
           }
           let share = Data(base64RawEncoded: recipientStanza.args[3])
-          if share == nil || share!.count != 33 {
+          if share == nil || (recipientStanza.args[1] == "piv-p256" && share!.count != 33)
+            || (recipientStanza.args[1] == "p256tag" && share!.count != 65)
+          {
             fileResponses[fileIndex] = Stanza(
               error: "stanza", args: [String(fileIndex)], message: "invalid share")
             continue
@@ -275,33 +303,57 @@ class Plugin {
           do {
             let shareKeyData = Data(base64RawEncoded: share)!
             let identityTag =
-              type == .p256tag
-              ? identity.publicKey.hmacTag(using: SymmetricKey(data: shareKeyData))
-                .base64RawEncodedString : identity.publicKey.sha256Tag.base64RawEncodedString
+              (type == .p256tag
+              ? identity.publicKey.hkdfTag(using: shareKeyData)
+              : identity.publicKey.sha256Tag)
+              .base64RawEncodedString()
             if identityTag != tag {
               continue
             }
 
-            let shareKey: P256.KeyAgreement.PublicKey = try P256.KeyAgreement.PublicKey(
-              compressedRepresentation: shareKeyData)
-            // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
-            // these keys can't be used in any operation. This is undocumented, but a documentation request
-            // has been filed as FB11989432.
-            // Swift Crypto PublicKeys cannot be the identity point by construction.
-            // Compresed representation cannot be the identity point anyway (?)
-            // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
-            // to explicitly check this here.
-            let sharedSecret: SharedSecret = try identity.sharedSecretFromKeyAgreement(
-              with: shareKey)
+            var nonce: ChaChaPoly.Nonce
+            var wrapKey: SymmetricKey
+
+            switch type {
+            case .pivp256:
+              let shareKey = try P256.KeyAgreement.PublicKey(
+                compressedRepresentation: shareKeyData)
+              // CryptoKit PublicKeys can be the identity point by construction (see CryptoTests), but
+              // these keys can't be used in any operation. This is undocumented, but a documentation request
+              // has been filed as FB11989432.
+              // Swift Crypto PublicKeys cannot be the identity point by construction.
+              // Compresed representation cannot be the identity point anyway (?)
+              // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
+              // to explicitly check this here.
+              let sharedSecret = try identity.sharedSecretFromKeyAgreement(
+                with: shareKey)
+              wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
+                using: SHA256.self,
+                salt: shareKeyData + identity.publicKey.compressedRepresentation,
+                sharedInfo: Data("piv-p256".utf8),
+                outputByteCount: 32
+              )
+              nonce = try! ChaChaPoly.Nonce(data: Data(count: 12))
+
+            case .p256tag:
+              // DHKEM-P256 decapsulation
+              let shareKey = try P256.KeyAgreement.PublicKey(
+                x963Representation: shareKeyData)
+              let sharedSecret = HPKE.extractAndExpand(
+                suiteID: "KEM".data(using: .utf8)! + Data([0x00, 0x10]),
+                dh: (try identity.sharedSecretFromKeyAgreement(with: shareKey)).withUnsafeBytes {
+                  Data($0)
+                },
+                kemContext: shareKeyData + identity.publicKey.x963Representation,
+                nSecret: 32)
+              (wrapKey, nonce) = HPKE.context(
+                kem: .dhkemP256,
+                sharedSecret: sharedSecret.withUnsafeBytes { Data($0) },
+                info: "age-encryption.org/p256tag".data(using: .utf8)!)
+            }
+
             let unwrappedKey = try ChaChaPoly.open(
-              ChaChaPoly.SealedBox(
-                combined: try! ChaChaPoly.Nonce(data: Data(count: 12)) + recipientStanza.body),
-              using: recipientStanzaWrapKey(
-                using: sharedSecret,
-                salt: shareKey.compressedRepresentation
-                  + identity.publicKey.compressedRepresentation,
-                type: type
-              ))
+              ChaChaPoly.SealedBox(combined: nonce + recipientStanza.body), using: wrapKey)
             fileResponses[fileIndex] = Stanza(
               type: "file-key",
               args: [String(fileIndex)],
@@ -383,7 +435,7 @@ struct Stanza: Equatable {
 
   func writeTo(stream: Stream) {
     let parts = ([type] + args).joined(separator: " ")
-    stream.writeLine("-> \(parts)\n\(body.base64RawEncodedString)")
+    stream.writeLine("-> \(parts)\n\(body.base64RawEncodedString(wrap: true))")
   }
 }
 
@@ -407,7 +459,7 @@ enum KeyAccessControl {
 
 enum RecipientType: String {
   case se = "se"
-  case p256tag = "p256tag"
+  case tag = "tag"
 }
 
 enum RecipientStanzaType: String {
@@ -415,42 +467,29 @@ enum RecipientStanzaType: String {
   case pivp256 = "piv-p256"
 }
 
-func recipientStanzaWrapKey(
-  using sharedSecret: SharedSecret, salt: Data, type: RecipientStanzaType
-) -> SymmetricKey {
-  switch type {
-  case .p256tag:
-    return sharedSecret.hkdfDerivedSymmetricKey(
-      using: SHA256.self,
-      salt: Data("age-encryption.org/v1/p256tag".utf8),
-      sharedInfo: salt,
-      outputByteCount: 32
-    )
-  case .pivp256:
-    return sharedSecret.hkdfDerivedSymmetricKey(
-      using: SHA256.self, salt: salt,
-      sharedInfo: Data("piv-p256".utf8),
-      outputByteCount: 32
-    )
-  }
-}
-
 extension P256.KeyAgreement.PublicKey {
   init(ageRecipient: String) throws {
     let id = try Bech32().decode(ageRecipient)
-    if id.hrp != "age1se" && id.hrp != "age1p256tag" {
+    if id.hrp != "age1se" && id.hrp != "age1tag" {
       throw Plugin.Error.unknownHRP(id.hrp)
     }
     self = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
+  }
+
+  init(uncompressedRepresentation: Data) throws {
+    self = try P256.KeyAgreement.PublicKey(x963Representation: uncompressedRepresentation)
   }
 
   var sha256Tag: Data {
     return Data(SHA256.hash(data: compressedRepresentation).prefix(4))
   }
 
-  func hmacTag(using: SymmetricKey) -> Data {
+  func hkdfTag(using: Data) -> Data {
     return Data(
-      HMAC<SHA256>.authenticationCode(for: compressedRepresentation, using: using).prefix(4))
+      HKDF<SHA256>.extract(
+        inputKeyMaterial: SymmetricKey(data: using + self.sha256Tag.prefix(4)),
+        salt: "age-encryption.org/p256tag".data(using: .utf8)!)
+    ).prefix(4)
   }
 
   func ageRecipient(type: RecipientType) -> String {

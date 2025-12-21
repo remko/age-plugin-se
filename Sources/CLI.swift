@@ -120,12 +120,12 @@ struct Options {
 
   enum RecipientType: String {
     case se = "se"
-    case p256tag = "p256tag"
+    case tag = "tag"
 
     var recipientType: age_plugin_se.RecipientType {
       switch self {
       case .se: return .se
-      case .p256tag: return .p256tag
+      case .tag: return .tag
       }
     }
   }

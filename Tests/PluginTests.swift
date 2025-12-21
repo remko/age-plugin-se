@@ -11,7 +11,7 @@ import XCTest
 final class PluginTests: XCTestCase {
   func testPublicKeySHA256Tag() throws {
     let key = try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32))
-    XCTAssertEqual("Ujulpw", key.sha256Tag.base64RawEncodedString)
+    XCTAssertEqual("Ujulpw", key.sha256Tag.base64RawEncodedString())
   }
 
   // Test to ensure that age-plugin-yubikey has the same output tag
@@ -23,10 +23,10 @@ final class PluginTests: XCTestCase {
         12, 222, 162, 205, 252, 47, 114, 187, 157, 117, 151, 57, 158,
       ]))
     XCTAssertEqual(Data([128, 103, 102, 255]), key.sha256Tag)
-    XCTAssertEqual("gGdm/w", key.sha256Tag.base64RawEncodedString)
+    XCTAssertEqual("gGdm/w", key.sha256Tag.base64RawEncodedString())
   }
 
-  func testPublicKeyHMACTag() throws {
+  func testPublicKeyHKDFTag() throws {
     let key = try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32))
     let ephemeralShare1 = Data([
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -36,10 +36,8 @@ final class PluginTests: XCTestCase {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 1,
     ])
-    XCTAssertEqual(
-      "l26jmA", key.hmacTag(using: SymmetricKey(data: ephemeralShare1)).base64RawEncodedString)
-    XCTAssertEqual(
-      "+w1lhg", key.hmacTag(using: SymmetricKey(data: ephemeralShare2)).base64RawEncodedString)
+    XCTAssertEqual("60GdBQ", key.hkdfTag(using: ephemeralShare1).base64RawEncodedString())
+    XCTAssertEqual("7oE6Eg", key.hkdfTag(using: ephemeralShare2).base64RawEncodedString())
   }
 }
 
@@ -121,19 +119,19 @@ final class GenerateKeyTests: XCTestCase {
   func testGenerate_P256TagRecipient() throws {
     let plugin = Plugin(crypto: crypto, stream: stream)
     let result = try plugin.generateKey(
-      accessControl: .anyBiometryOrPasscode, recipientType: .p256tag,
+      accessControl: .anyBiometryOrPasscode, recipientType: .tag,
       now: Date(timeIntervalSinceReferenceDate: -123456789.0)
     )
     XCTAssertEqual(
       """
       # created: 1997-02-02T02:26:51Z
       # access control: any biometry or passcode
-      # public key: age1p256tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kfhdut2
+      # public key: age1tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k7ux6zq
       AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
 
       """, result.0)
     XCTAssertEqual(
-      "age1p256tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kfhdut2", result.1)
+      "age1tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k7ux6zq", result.1)
   }
 }
 
@@ -168,11 +166,11 @@ final class GenerateRecipientsTests: XCTestCase {
         # Comment 1
         AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
         """,
-      recipientType: .p256tag
+      recipientType: .tag
     )
     XCTAssertEqual(
       """
-      age1p256tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kfhdut2
+      age1tag1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20k7ux6zq
       """, result)
   }
 
@@ -255,8 +253,8 @@ final class RecipientV1Tests: XCTestCase {
       "age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l",
       key1.publicKey.ageRecipient(type: .se))
     XCTAssertEqual(
-      "age1p256tag1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lwpmkcwq",
-      key1.publicKey.ageRecipient(type: .p256tag))
+      "age1tag1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lwksa782",
+      key1.publicKey.ageRecipient(type: .tag))
 
     let key2 = try! crypto.newSecureEnclavePrivateKey(
       dataRepresentation: Data(base64RawEncoded: "kBuQrPyfvCqBXJ5G4YBkqNER201niIeOmlXsRS2gxN0")!)
@@ -267,8 +265,8 @@ final class RecipientV1Tests: XCTestCase {
       "age1se1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj752upj6l",
       key2.publicKey.ageRecipient(type: .se))
     XCTAssertEqual(
-      "age1p256tag1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj753suh3q",
-      key2.publicKey.ageRecipient(type: .p256tag))
+      "age1tag1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75xmh3c2",
+      key2.publicKey.ageRecipient(type: .tag))
   }
 
   func testNothing() throws {
@@ -310,7 +308,7 @@ final class RecipientV1Tests: XCTestCase {
     stream.add(
       input:
         """
-        -> add-recipient age1p256tag1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lwpmkcwq
+        -> add-recipient age1tag1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lwksa782
 
         -> wrap-file-key
         AAAAAAAAAAAAAAAAAAAAAQ
@@ -323,8 +321,8 @@ final class RecipientV1Tests: XCTestCase {
 
     XCTAssertEqual(
       """
-      -> recipient-stanza 0 p256tag tHLLKQ Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      eCnx6Ik2/6gX9M79e4+NQQ36GtZZj9qa6+pNlWjA1Nk
+      -> recipient-stanza 0 p256tag NDTf9g BD7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7aUSkQuuvOANb1o+BKtf/4/F++4nJgRQ0PgIyFJq8i88
+      14bmQarAgrOM0M27KRHYp9RzNYlcv3pJgRm9sTCB08c
       -> done
 
       """, stream.output)
@@ -618,8 +616,8 @@ final class IdentityV1Tests: XCTestCase {
         """
         -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
 
-        -> recipient-stanza 0 p256tag tHLLKQ Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-        eCnx6Ik2/6gX9M79e4+NQQ36GtZZj9qa6+pNlWjA1Nk
+        -> recipient-stanza 0 p256tag NDTf9g BD7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7aUSkQuuvOANb1o+BKtf/4/F++4nJgRQ0PgIyFJq8i88
+        14bmQarAgrOM0M27KRHYp9RzNYlcv3pJgRm9sTCB08c
         -> done
 
         -> ok

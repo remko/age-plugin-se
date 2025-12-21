@@ -44,7 +44,7 @@ MAN_TARGET := man
 endif
 
 .PHONY: all
-all: $(BUILD_DIR)/age-plugin-p256tag $(MAN_TARGET)
+all: $(BUILD_DIR)/age-plugin-tag $(MAN_TARGET)
 	swift build $(SWIFT_BUILD_FLAGS)
 
 .PHONY: package
@@ -107,7 +107,7 @@ man: .build/age-plugin-se.1
 	cat $< | sed "s/@VERSION@/$(VERSION)/g" | scdoc > $@.tmp
 	mv $@.tmp $@
 
-$(BUILD_DIR)/age-plugin-p256tag:
+$(BUILD_DIR)/age-plugin-tag:
 	mkdir -p $(BUILD_DIR)
 	ln -sf age-plugin-se $@
 
@@ -152,6 +152,17 @@ piv-p256-decrypt-interop-test:
 	interop_recipient=`./Scripts/ConvertBech32HRP.swift $$recipient age1$(INTEROP_PLUGIN)` && \
 	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$interop_recipient'...' && \
 	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$interop_recipient -o secret.txt.age) && \
+	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
+	$(AGE) --decrypt -i key.txt secret.txt.age && \
+	rm -f key.txt secret.txt.age
+
+.PHONY: p256tag-decrypt-interop-test
+p256tag-decrypt-interop-test:
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
+	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
+	recipient=`age-plugin-se keygen --access-control=none --recipient-type=tag -o key.txt | sed -e "s/Public key: //"` && \
+	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$recipient'...' && \
+	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
 	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
 	$(AGE) --decrypt -i key.txt secret.txt.age && \
 	rm -f key.txt secret.txt.age
