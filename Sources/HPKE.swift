@@ -10,7 +10,7 @@ import Foundation
 enum HPKE {
   enum KEM: UInt16 {
     case dhkemP256 = 0x0010
-    // case mlkem768P256 = 0x0050
+    case mlkem768P256 = 0x0050
 
     var suiteID: Data {
       var data = Data("HPKE".utf8)
@@ -76,6 +76,70 @@ enum HPKE {
       kemContext: enc + recipientKey.publicKey.x963Representation,
       nSecret: 32)
     return sharedSecret
+  }
+
+  static func mlkemp256Encap(
+    recipientP256Key: P256.KeyAgreement.PublicKey, recipientMLKEM768Key: MLKEM768.PublicKey,
+    crypto: Crypto
+  ) throws -> (
+    sharedSecret: SymmetricKey, enc: Data
+  ) {
+    #if compiler(>=6.2)
+      if #unavailable(macOS 21.0) {
+        throw Plugin.Error.pqUnavailable
+      }
+      let pq = try crypto.encapsulate(mlkem768Key: recipientMLKEM768Key)
+      let sharedSecretPQ = pq.sharedSecret.withUnsafeBytes { Data($0) }
+
+      let skE = crypto.newEphemeralP256PrivateKey()
+      let sharedSecretT = (try skE.sharedSecretFromKeyAgreement(with: recipientP256Key))
+        .withUnsafeBytes { Data($0) }
+      let encT = skE.publicKey.x963Representation
+
+      var sharedSecret = SHA3_256()
+      sharedSecret.update(data: sharedSecretPQ)
+      sharedSecret.update(data: sharedSecretT)
+      sharedSecret.update(data: encT)
+      sharedSecret.update(data: recipientP256Key.x963Representation)
+      sharedSecret.update(data: "MLKEM768-P256".data(using: .utf8)!)
+
+      let enc = pq.encapsulated + encT
+
+      return (sharedSecret: SymmetricKey(data: sharedSecret.finalize()), enc: enc)
+    #else
+      throw Plugin.Error.pqUnsupported
+    #endif
+  }
+
+  static func mlkemp256Decap(
+    enc: Data, recipientP256Key: SecureEnclaveP256PrivateKey,
+    recipientMLKEM768Key: SecureEnclaveMLKEM768PrivateKey
+  ) throws
+    -> SymmetricKey
+  {
+    #if compiler(>=6.2)
+      if #unavailable(macOS 21.0) {
+        throw Plugin.Error.pqUnavailable
+      }
+
+      let encPQ = enc[..<1088]
+      let encT = enc[1088...]
+
+      let sharedSecretPQ = try recipientMLKEM768Key.decapsulate(encPQ)
+      let sharedSecretT =
+        (try recipientP256Key.sharedSecretFromKeyAgreement(
+          with: try P256.KeyAgreement.PublicKey(x963Representation: Data(encT))))
+
+      var sharedSecret = SHA3_256()
+      sharedSecret.update(data: sharedSecretPQ.withUnsafeBytes { Data($0) })
+      sharedSecret.update(data: sharedSecretT.withUnsafeBytes { Data($0) })
+      sharedSecret.update(data: encT)
+      sharedSecret.update(data: recipientP256Key.publicKey.x963Representation)
+      sharedSecret.update(data: "MLKEM768-P256".data(using: .utf8)!)
+      return SymmetricKey(data: sharedSecret.finalize())
+    #else
+      throw Plugin.Error.pqUnsupported
+    #endif
   }
 
   private static func labeledExtract(suiteID: Data, salt: Data?, label: String, ikm: Data) -> Data {

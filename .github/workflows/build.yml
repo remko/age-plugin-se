@@ -16,11 +16,13 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-14, ubuntu-22.04]
+        os: [macos-14, macos-26, ubuntu-22.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - if: matrix.os == 'macos-14' || matrix.os == 'ubuntu-22.04'
+        run: make patch-package-swift-legacy
       - run: make
       - run: make test COVERAGE=1
       - run: make smoke-test-encrypt
@@ -43,7 +45,8 @@ jobs:
         env:
           TOOLCHAINS: swift
           ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-        if: runner.os == 'macOS'
+        # Having problems on latest macos, so or now limiting this to the older one
+        if: runner.os == 'macOS' && matrix.os == 'macos-14'
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
@@ -65,7 +68,7 @@ jobs:
         uses: actions/upload-pages-artifact@v3
         with:
           path: .build/site
-        if: runner.os == 'macOS'
+        if: runner.os == 'macOS' && matrix.os != 'macos-14'
 
   # Running swift from the Makefile doesn't work (yet), so we have a separate
   # build procedure for windows.
@@ -74,6 +77,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - run: make patch-package-swift-legacy
       - run: swift build
       # Unit tests don't seem to work yet
       # - run: swift test

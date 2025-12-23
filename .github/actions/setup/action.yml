@@ -45,7 +45,7 @@ runs:
   # Install a 6.0 toolchain and SDK so we can package a static Linux binary
   # Used by setting TOOLCHAINS=swift in the environment
   # Once the macOS runner has a Swift 6 compiler, we can remove the toolchain download.
-  - if: runner.os == 'macOS'
+  - if: runner.os == 'macOS' && matrix.os != 'macos-26'
     run: |
       curl -L -s -o swift.pkg https://download.swift.org/swift-6.0-branch/xcode/swift-6.0-DEVELOPMENT-SNAPSHOT-2024-09-17-a/swift-6.0-DEVELOPMENT-SNAPSHOT-2024-09-17-a-osx.pkg
       sudo installer -pkg swift.pkg -verbose -dumplog -target /

@@ -25,9 +25,9 @@ them with Touch ID.
 ## Requirements
 
 To generate identities (private keys) and decrypt encrypted files, you need a Mac
-running macOS 13 (Ventura) with a Secure Enclave processor.
+running macOS 14 (Sonoma) with a Secure Enclave processor.
 
-For encrypting files, you need macOS 13 (Ventura), Linux, or Windows. A
+For encrypting files, you need macOS 14 (Sonoma), Linux, or Windows. A
 Secure Enclave processor is not necessary.
 
 ## Installation
@@ -244,8 +244,8 @@ $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 
 ## Usage
 
-    age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
-    age-plugin-se recipients [-o OUTPUT] [-i INPUT]
+    age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL]
+    age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT]
 
     The `keygen` subcommand generates a new private key bound to the current 
     Secure Enclave, with the given access controls, and outputs it to OUTPUT 
@@ -271,6 +271,7 @@ $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 
       -i, --input INPUT                 Read data from the file at path INPUT
 
+      --pq                              Generate post-quantum keys
 
 
 ## Development

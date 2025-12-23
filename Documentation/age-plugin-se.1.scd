@@ -7,8 +7,8 @@ age-plugin-se - age plugin for Apple Secure Enclave
 
 # SYNOPSIS
 
-*age-plugin-se* *keygen* \[*-o* _OUTPUT_\] \[*--access-control* _ACCESS_CONTROL_\]++
-*age-plugin-se* *recipients* \[*-o* _OUTPUT_\] \[*-i* _INPUT_\]
+*age-plugin-se* *keygen* \[*--pq*\]  \[*-o* _OUTPUT_\] \[*--access-control* _ACCESS_CONTROL_\]++
+*age-plugin-se* *recipients* \[*--pq*\] \[*-o* _OUTPUT_\] \[*-i* _INPUT_\]
 
 
 # DESCRIPTION
@@ -47,6 +47,10 @@ output.
 	*any-biometry-and-passcode*, *any-biometry-or-passcode*,
 	*current-biometry*, *current-biometry-and-passcode*.  Default:
 	*any-biometry-or-passcode*.
+
+*--pq*
+
+	Generate post-quantum keys
 
 
 # EXAMPLES

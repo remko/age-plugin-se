@@ -16,7 +16,8 @@ struct CLI {
       case .keygen:
         let result = try plugin.generateKey(
           accessControl: options.accessControl.keyAccessControl,
-          recipientType: options.recipientType.recipientType, now: Date())
+          recipientType: options.recipientType.recipientType, now: Date(),
+          pq: options.pq)
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
@@ -94,6 +95,8 @@ struct Options {
   var output: String?
   var input: String?
 
+  var pq: Bool = false
+
   enum AccessControl: String {
     case none = "none"
     case passcode = "passcode"
@@ -134,8 +137,8 @@ struct Options {
   static let help =
     """
     Usage:
-      age-plugin-se keygen [-o OUTPUT] [--access-control ACCESS_CONTROL]
-      age-plugin-se recipients [-o OUTPUT] [-i INPUT]
+      age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL]
+      age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT]
 
     Description:
       The `keygen` subcommand generates a new private key bound to the current 
@@ -163,6 +166,8 @@ struct Options {
 
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
+      --pq                              Generate post-quantum keys
+
     Example:
       $ age-plugin-se keygen -o key.txt
       Public key: age1se1qg8vwwqhztnh3vpt2nf2xwn7famktxlmp0nmkfltp8lkvzp8nafkqleh258
@@ -185,6 +190,8 @@ struct Options {
       } else if ["--version"].contains(arg) {
         opts.command = .version
         break
+      } else if ["--pq"].contains(arg) {
+        opts.pq = true
       } else if [
         "--age-plugin", "-i", "--input", "-o", "--output", "--access-control", "--recipient-type",
       ].contains(where: {

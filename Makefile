@@ -44,7 +44,7 @@ MAN_TARGET := man
 endif
 
 .PHONY: all
-all: $(BUILD_DIR)/age-plugin-tag $(MAN_TARGET)
+all: $(BUILD_DIR)/age-plugin-tag $(BUILD_DIR)/age-plugin-tagpq $(MAN_TARGET)
 	swift build $(SWIFT_BUILD_FLAGS)
 
 .PHONY: package
@@ -100,6 +100,7 @@ ifneq ($(SCDOC),)
 	install .build/age-plugin-se.1 $(DESTDIR)$(PREFIX)/share/man/man1
 endif
 
+.IGNORE: .build/age-plugin-se.1
 man: .build/age-plugin-se.1
 
 .build/age-plugin-se.1: Documentation/age-plugin-se.1.scd
@@ -107,10 +108,19 @@ man: .build/age-plugin-se.1
 	cat $< | sed "s/@VERSION@/$(VERSION)/g" | scdoc > $@.tmp
 	mv $@.tmp $@
 
-$(BUILD_DIR)/age-plugin-tag:
+$(BUILD_DIR)/age-plugin-tag $(BUILD_DIR)/age-plugin-tagpq:
 	mkdir -p $(BUILD_DIR)
 	ln -sf age-plugin-se $@
 
+.PHONY: clean
+clean:
+	-rm -rf .build manual-tests
+
+patch-package-swift-legacy:
+	cat Package.swift | sed -e 's/\/\/ swift-tools-version: .*/\/\/ swift-tools-version: 5.9/' -e 's/\.macOS(\.v26)/\.macOS(\.v14)/' > Package.swift.tmp
+	mv Package.swift.tmp Package.swift
+
+################################################################################
 
 .PHONY: smoke-test
 smoke-test:
@@ -167,6 +177,17 @@ p256tag-decrypt-interop-test:
 	$(AGE) --decrypt -i key.txt secret.txt.age && \
 	rm -f key.txt secret.txt.age
 
+.PHONY: mlkemp256tag-decrypt-interop-test
+mlkem768p256tag-decrypt-interop-test:
+	$(AT)PATH="$(BUILD_DIR):$$PATH" && \
+	$(ECHO) '\xf0\x9f\x94\x91 Generating key...' && \
+	recipient=`age-plugin-se keygen --access-control=none --pq --recipient-type=tag -o key.txt | sed -e "s/Public key: //"` && \
+	$(ECHO) '\xf0\x9f\x94\x92 Encrypting to '$$recipient'...' && \
+	($(ECHO) '\xe2\x9c\x85 \x53\x75\x63\x63\x65\x73\x73' | $(AGE) --encrypt --recipient $$recipient -o secret.txt.age) && \
+	$(ECHO) '\xf0\x9f\x94\x93 Decrypting...' && \
+	$(AGE) --decrypt -i key.txt secret.txt.age && \
+	rm -f key.txt secret.txt.age
+
 .PHONY: gen-manual-tests
 gen-manual-tests:
 	-rm -rf gen-manual-tests
@@ -185,9 +206,3 @@ run-manual-tests:
 		$(AGE) --decrypt -i manual-tests/key.$$control.txt manual-tests/secret.txt.$$control.age; \
 		$(ECHO) "\n-----\n"; \
 	done
-
-.PHONY: clean
-clean:
-	-rm -rf .build manual-tests
-
-.IGNORE: .build/age-plugin-se.1
