@@ -15,7 +15,8 @@ class Plugin {
     self.stream = stream
   }
 
-  func generateKey(accessControl: KeyAccessControl, recipientType: RecipientType, now: Date) throws
+  func generateKey(accessControl: KeyAccessControl, recipientType: RecipientType, now: Date)
+    throws
     -> (String, String)
   {
     if !crypto.isSecureEnclaveAvailable {
@@ -55,9 +56,8 @@ class Plugin {
       let secAccessControl = SecAccessControl()
     #endif
 
-    let privateKey = try crypto.newSecureEnclavePrivateKey(accessControl: secAccessControl)
-    let recipient = privateKey.publicKey.ageRecipient(type: recipientType)
-    let identity = privateKey.ageIdentity
+    let identity = try Identity(accessControl: secAccessControl, crypto: self.crypto)
+    let ageRecipient = identity.recipient.ageRecipient(type: recipientType)
     let accessControlStr: String
     switch accessControl {
     case .none: accessControlStr = "none"
@@ -69,15 +69,17 @@ class Plugin {
     case .currentBiometryAndPasscode: accessControlStr = "current biometry and passcode"
     }
 
+    let recipientsStr = "# public key: \(ageRecipient)"
+
     let contents = """
       # created: \(createdAt)
       # access control: \(accessControlStr)
-      # public key: \(recipient)
-      \(identity)
+      \(recipientsStr)
+      \(identity.ageIdentity)
 
       """
 
-    return (contents, recipient)
+    return (contents, ageRecipient)
   }
 
   func generateRecipients(input: String, recipientType: RecipientType) throws -> String {
@@ -87,8 +89,8 @@ class Plugin {
         continue
       }
       let sl = String(l.trimmingCharacters(in: .whitespacesAndNewlines))
-      let privateKey = try newSecureEnclavePrivateKey(ageIdentity: sl, crypto: self.crypto)
-      recipients.append(privateKey.publicKey.ageRecipient(type: recipientType))
+      let identity = try Identity(ageIdentity: sl, crypto: self.crypto)
+      recipients.append(identity.recipient.ageRecipient(type: recipientType))
     }
     return recipients.joined(separator: "\n")
   }
@@ -118,35 +120,38 @@ class Plugin {
     // Phase 2
     var stanzas: [Stanza] = []
     var errors: [Stanza] = []
-    var recipientKeys: [(P256.KeyAgreement.PublicKey, RecipientStanzaType)] = []
+    var recipientKeys: [(Recipient, RecipientStanzaType)] = []
     for (index, recipient) in recipients.enumerated() {
       do {
         recipientKeys.append(
           (
-            (try P256.KeyAgreement.PublicKey(ageRecipient: recipient)),
+            try Recipient(ageRecipient: recipient),
             recipient.starts(with: "age1tag1") ? .p256tag : .pivp256
           ))
       } catch {
         errors.append(
-          Stanza(error: "recipient", args: [String(index)], message: error.localizedDescription))
+          Stanza(
+            error: "recipient", args: [String(index)],
+            message: error.localizedDescription))
       }
     }
     for (index, identity) in identities.enumerated() {
       do {
         recipientKeys.append(
           (
-            (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)).publicKey,
+            (try Identity(ageIdentity: identity, crypto: crypto)).recipient,
             .pivp256
           ))
       } catch {
         errors.append(
-          Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
+          Stanza(
+            error: "identity", args: [String(index)],
+            message: error.localizedDescription))
       }
     }
     for (index, fileKey) in fileKeys.enumerated() {
       for (recipientKey, recipientStanzaType) in recipientKeys {
         do {
-          let skE = self.crypto.newEphemeralPrivateKey()
           var tag: Data
           var nonce: ChaChaPoly.Nonce
           var wrapKey: SymmetricKey
@@ -154,6 +159,7 @@ class Plugin {
 
           switch recipientStanzaType {
           case .pivp256:
+            let skE = self.crypto.newEphemeralP256PrivateKey()
             pkEBytes = skE.publicKey.compressedRepresentation
             tag = recipientKey.sha256Tag
             nonce = try! ChaChaPoly.Nonce(data: Data(count: 12))
@@ -166,29 +172,23 @@ class Plugin {
             // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
             // to explicitly check this here.
             let sharedSecret = try skE.sharedSecretFromKeyAgreement(
-              with: recipientKey)
+              with: recipientKey.p256PublicKey)
             wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
-              using: SHA256.self, salt: pkEBytes + recipientKey.compressedRepresentation,
+              using: SHA256.self,
+              salt: pkEBytes + recipientKey.compressedP256Representation,
               sharedInfo: Data("piv-p256".utf8),
               outputByteCount: 32
             )
 
           case .p256tag:
-            pkEBytes = skE.publicKey.x963Representation
-            tag = recipientKey.hkdfTag(using: pkEBytes)
-
-            // DHKEM-P256 encapsulation
-            let sharedSecret = HPKE.extractAndExpand(
-              suiteID: "KEM".data(using: .utf8)! + Data([0x00, 0x10]),
-              dh: (try skE.sharedSecretFromKeyAgreement(with: recipientKey)).withUnsafeBytes {
-                Data($0)
-              },
-              kemContext: pkEBytes + recipientKey.x963Representation,
-              nSecret: 32)
+            let (sharedSecret, enc) = try HPKE.dhkemEncap(
+              recipientKey: recipientKey.p256PublicKey, crypto: crypto)
             (wrapKey, nonce) = HPKE.context(
               kem: .dhkemP256,
-              sharedSecret: sharedSecret.withUnsafeBytes { Data($0) },
+              sharedSecret: sharedSecret,
               info: "age-encryption.org/p256tag".data(using: .utf8)!)
+            tag = recipientKey.p256HKDFTag(using: enc)
+            pkEBytes = enc
           }
 
           let sealedBox = try ChaChaPoly.seal(fileKey, using: wrapKey, nonce: nonce)
@@ -236,17 +236,19 @@ class Plugin {
     }
 
     // Phase 2
-    var identityKeys: [SecureEnclavePrivateKey] = []
+    var identityKeys: [Identity] = []
     var errors: [Stanza] = []
 
     // Construct identities
     for (index, identity) in identities.enumerated() {
       do {
         identityKeys.append(
-          (try newSecureEnclavePrivateKey(ageIdentity: identity, crypto: crypto)))
+          (try Identity(ageIdentity: identity, crypto: crypto)))
       } catch {
         errors.append(
-          Stanza(error: "identity", args: [String(index)], message: error.localizedDescription))
+          Stanza(
+            error: "identity", args: [String(index)],
+            message: error.localizedDescription))
       }
     }
 
@@ -259,7 +261,8 @@ class Plugin {
         case "piv-p256", "p256tag":
           if recipientStanza.args.count != 4 {
             fileResponses[fileIndex] = Stanza(
-              error: "stanza", args: [String(fileIndex)], message: "incorrect argument count")
+              error: "stanza", args: [String(fileIndex)],
+              message: "incorrect argument count")
             continue
           }
           let tag = Data(base64RawEncoded: recipientStanza.args[2])
@@ -304,8 +307,8 @@ class Plugin {
             let shareKeyData = Data(base64RawEncoded: share)!
             let identityTag =
               (type == .p256tag
-              ? identity.publicKey.hkdfTag(using: shareKeyData)
-              : identity.publicKey.sha256Tag)
+              ? identity.recipient.p256HKDFTag(using: shareKeyData)
+              : identity.recipient.sha256Tag)
               .base64RawEncodedString()
             if identityTag != tag {
               continue
@@ -325,35 +328,30 @@ class Plugin {
               // Compresed representation cannot be the identity point anyway (?)
               // Therefore, the shared secret cannot be all 0x00 bytes, so we don't need
               // to explicitly check this here.
-              let sharedSecret = try identity.sharedSecretFromKeyAgreement(
-                with: shareKey)
+              let sharedSecret = try identity.p256PrivateKey
+                .sharedSecretFromKeyAgreement(
+                  with: shareKey)
               wrapKey = sharedSecret.hkdfDerivedSymmetricKey(
                 using: SHA256.self,
-                salt: shareKeyData + identity.publicKey.compressedRepresentation,
+                salt: shareKeyData
+                  + identity.recipient.compressedP256Representation,
                 sharedInfo: Data("piv-p256".utf8),
                 outputByteCount: 32
               )
               nonce = try! ChaChaPoly.Nonce(data: Data(count: 12))
 
             case .p256tag:
-              // DHKEM-P256 decapsulation
-              let shareKey = try P256.KeyAgreement.PublicKey(
-                x963Representation: shareKeyData)
-              let sharedSecret = HPKE.extractAndExpand(
-                suiteID: "KEM".data(using: .utf8)! + Data([0x00, 0x10]),
-                dh: (try identity.sharedSecretFromKeyAgreement(with: shareKey)).withUnsafeBytes {
-                  Data($0)
-                },
-                kemContext: shareKeyData + identity.publicKey.x963Representation,
-                nSecret: 32)
+              let sharedSecret = try HPKE.dhkemDecap(
+                enc: shareKeyData, recipientKey: identity.p256PrivateKey)
               (wrapKey, nonce) = HPKE.context(
                 kem: .dhkemP256,
-                sharedSecret: sharedSecret.withUnsafeBytes { Data($0) },
+                sharedSecret: sharedSecret,
                 info: "age-encryption.org/p256tag".data(using: .utf8)!)
             }
 
             let unwrappedKey = try ChaChaPoly.open(
-              ChaChaPoly.SealedBox(combined: nonce + recipientStanza.body), using: wrapKey)
+              ChaChaPoly.SealedBox(combined: nonce + recipientStanza.body),
+              using: wrapKey)
             fileResponses[fileIndex] = Stanza(
               type: "file-key",
               args: [String(fileIndex)],
@@ -467,24 +465,36 @@ enum RecipientStanzaType: String {
   case pivp256 = "piv-p256"
 }
 
-extension P256.KeyAgreement.PublicKey {
+////////////////////////////////////////////////////////////////////////////////
+
+struct Recipient {
+  let p256PublicKey: P256.KeyAgreement.PublicKey
+
   init(ageRecipient: String) throws {
     let id = try Bech32().decode(ageRecipient)
     if id.hrp != "age1se" && id.hrp != "age1tag" {
       throw Plugin.Error.unknownHRP(id.hrp)
     }
-    self = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
+    self.p256PublicKey = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
   }
 
-  init(uncompressedRepresentation: Data) throws {
-    self = try P256.KeyAgreement.PublicKey(x963Representation: uncompressedRepresentation)
+  init(p256PublicKey: P256.KeyAgreement.PublicKey) {
+    self.p256PublicKey = p256PublicKey
+  }
+
+  var uncompressedP256Representation: Data {
+    return self.p256PublicKey.x963Representation
+  }
+
+  var compressedP256Representation: Data {
+    return self.p256PublicKey.compressedRepresentation
   }
 
   var sha256Tag: Data {
-    return Data(SHA256.hash(data: compressedRepresentation).prefix(4))
+    return Data(SHA256.hash(data: self.p256PublicKey.compressedRepresentation).prefix(4))
   }
 
-  func hkdfTag(using: Data) -> Data {
+  func p256HKDFTag(using: Data) -> Data {
     return Data(
       HKDF<SHA256>.extract(
         inputKeyMaterial: SymmetricKey(data: using + self.sha256Tag.prefix(4)),
@@ -493,24 +503,34 @@ extension P256.KeyAgreement.PublicKey {
   }
 
   func ageRecipient(type: RecipientType) -> String {
-    return Bech32().encode(hrp: "age1\(type.rawValue)", data: self.compressedRepresentation)
+    return Bech32().encode(
+      hrp: "age1\(type.rawValue)", data: self.p256PublicKey.compressedRepresentation)
   }
 }
 
-extension SecureEnclavePrivateKey {
+struct Identity {
+  let p256PrivateKey: SecureEnclaveP256PrivateKey
+
+  init(ageIdentity: String, crypto: Crypto) throws {
+    let id = try Bech32().decode(ageIdentity)
+    if id.hrp != "AGE-PLUGIN-SE-" {
+      throw Plugin.Error.unknownHRP(id.hrp)
+    }
+    self.p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(dataRepresentation: id.data)
+  }
+
+  init(accessControl: SecAccessControl, crypto: Crypto) throws {
+    self.p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(
+      accessControl: accessControl)
+  }
+
+  var recipient: Recipient {
+    return Recipient(p256PublicKey: self.p256PrivateKey.publicKey)
+  }
+
   var ageIdentity: String {
     return Bech32().encode(
       hrp: "AGE-PLUGIN-SE-",
-      data: self.dataRepresentation)
+      data: self.p256PrivateKey.dataRepresentation)
   }
-}
-
-func newSecureEnclavePrivateKey(ageIdentity: String, crypto: Crypto) throws
-  -> SecureEnclavePrivateKey
-{
-  let id = try Bech32().decode(ageIdentity)
-  if id.hrp != "AGE-PLUGIN-SE-" {
-    throw Plugin.Error.unknownHRP(id.hrp)
-  }
-  return try crypto.newSecureEnclavePrivateKey(dataRepresentation: id.data)
 }

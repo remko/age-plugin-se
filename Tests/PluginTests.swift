@@ -9,25 +9,28 @@ import XCTest
 #endif
 
 final class PluginTests: XCTestCase {
-  func testPublicKeySHA256Tag() throws {
-    let key = try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32))
+  func testRecipientSHA256Tag() throws {
+    let key = Recipient(
+      p256PublicKey: try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32)))
     XCTAssertEqual("Ujulpw", key.sha256Tag.base64RawEncodedString())
   }
 
   // Test to ensure that age-plugin-yubikey has the same output tag
   // These values were extracted from a yubikey recipient
-  func testPublicKeySHA256Tag_YubiKeyPlugin() throws {
-    let key = try P256.KeyAgreement.PublicKey(
-      compactRepresentation: Data([
-        182, 32, 36, 98, 119, 204, 123, 231, 20, 203, 102, 119, 81, 232, 194, 196, 140, 194, 55,
-        12, 222, 162, 205, 252, 47, 114, 187, 157, 117, 151, 57, 158,
-      ]))
+  func testRecipientSHA256Tag_YubiKeyPlugin() throws {
+    let key = Recipient(
+      p256PublicKey: try P256.KeyAgreement.PublicKey(
+        compactRepresentation: Data([
+          182, 32, 36, 98, 119, 204, 123, 231, 20, 203, 102, 119, 81, 232, 194, 196, 140, 194, 55,
+          12, 222, 162, 205, 252, 47, 114, 187, 157, 117, 151, 57, 158,
+        ])))
     XCTAssertEqual(Data([128, 103, 102, 255]), key.sha256Tag)
     XCTAssertEqual("gGdm/w", key.sha256Tag.base64RawEncodedString())
   }
 
-  func testPublicKeyHKDFTag() throws {
-    let key = try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32))
+  func testRecipientP256HKDFTag() throws {
+    let key = Recipient(
+      p256PublicKey: try P256.KeyAgreement.PublicKey(compactRepresentation: Data(count: 32)))
     let ephemeralShare1 = Data([
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0,
@@ -36,8 +39,8 @@ final class PluginTests: XCTestCase {
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 1,
     ])
-    XCTAssertEqual("60GdBQ", key.hkdfTag(using: ephemeralShare1).base64RawEncodedString())
-    XCTAssertEqual("7oE6Eg", key.hkdfTag(using: ephemeralShare2).base64RawEncodedString())
+    XCTAssertEqual("60GdBQ", key.p256HKDFTag(using: ephemeralShare1).base64RawEncodedString())
+    XCTAssertEqual("7oE6Eg", key.p256HKDFTag(using: ephemeralShare2).base64RawEncodedString())
   }
 }
 
@@ -244,29 +247,32 @@ final class RecipientV1Tests: XCTestCase {
 
   // Just a test to get the identities of the test keys used in this test
   func testKeys() throws {
-    let key1 = try! crypto.newSecureEnclavePrivateKey(
-      dataRepresentation: Data(base64RawEncoded: "OSe+zDK18qF0UrjxYVkmwvxyEdxZHp9F69rElj8bKS8")!)
+    let key1 = try! Identity(
+      ageIdentity: "AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG",
+      crypto: crypto)
+
     XCTAssertEqual(
-      "AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG",
-      key1.ageIdentity)
+      "OSe+zDK18qF0UrjxYVkmwvxyEdxZHp9F69rElj8bKS8",
+      key1.p256PrivateKey.dataRepresentation.base64RawEncodedString())
     XCTAssertEqual(
       "age1se1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lw6hta9l",
-      key1.publicKey.ageRecipient(type: .se))
+      key1.recipient.ageRecipient(type: .se))
     XCTAssertEqual(
       "age1tag1qf0l9gks6x65ha077wq3w3u8fy02tpg3cd9w5j0jlgpfgqkcut2lwksa782",
-      key1.publicKey.ageRecipient(type: .tag))
+      key1.recipient.ageRecipient(type: .tag))
 
-    let key2 = try! crypto.newSecureEnclavePrivateKey(
-      dataRepresentation: Data(base64RawEncoded: "kBuQrPyfvCqBXJ5G4YBkqNER201niIeOmlXsRS2gxN0")!)
+    let key2 = try! Identity(
+      ageIdentity: "AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7",
+      crypto: crypto)
     XCTAssertEqual(
-      "AGE-PLUGIN-SE-1JQDEPT8UN77Z4Q2UNERWRQRY4RG3RK6DV7YG0R562HKY2TDQCNWSREKAW7",
-      key2.ageIdentity)
+      "kBuQrPyfvCqBXJ5G4YBkqNER201niIeOmlXsRS2gxN0",
+      key2.p256PrivateKey.dataRepresentation.base64RawEncodedString())
     XCTAssertEqual(
       "age1se1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj752upj6l",
-      key2.publicKey.ageRecipient(type: .se))
+      key2.recipient.ageRecipient(type: .se))
     XCTAssertEqual(
       "age1tag1q0mm28s88km3d8fvwve26xg4tt26cqamhxm79g9xvmw0f2erawj75xmh3c2",
-      key2.publicKey.ageRecipient(type: .tag))
+      key2.recipient.ageRecipient(type: .tag))
   }
 
   func testNothing() throws {

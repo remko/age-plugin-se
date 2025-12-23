@@ -12,12 +12,14 @@ import Foundation
 protocol Crypto {
   var isSecureEnclaveAvailable: Bool { get }
 
-  func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey
-  func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws -> SecureEnclavePrivateKey
-  func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey
+  func newSecureEnclaveP256PrivateKey(dataRepresentation: Data) throws
+    -> SecureEnclaveP256PrivateKey
+  func newSecureEnclaveP256PrivateKey(accessControl: SecAccessControl) throws
+    -> SecureEnclaveP256PrivateKey
+  func newEphemeralP256PrivateKey() -> P256.KeyAgreement.PrivateKey
 }
 
-protocol SecureEnclavePrivateKey {
+protocol SecureEnclaveP256PrivateKey {
   var publicKey: P256.KeyAgreement.PublicKey { get }
   var dataRepresentation: Data { get }
 
@@ -33,24 +35,26 @@ protocol SecureEnclavePrivateKey {
       return SecureEnclave.isAvailable
     }
 
-    func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
+    func newSecureEnclaveP256PrivateKey(dataRepresentation: Data) throws
+      -> SecureEnclaveP256PrivateKey
+    {
       return try SecureEnclave.P256.KeyAgreement.PrivateKey(
         dataRepresentation: dataRepresentation, authenticationContext: context)
     }
 
-    func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws
-      -> SecureEnclavePrivateKey
+    func newSecureEnclaveP256PrivateKey(accessControl: SecAccessControl) throws
+      -> SecureEnclaveP256PrivateKey
     {
       return try SecureEnclave.P256.KeyAgreement.PrivateKey(
         accessControl: accessControl, authenticationContext: context)
     }
 
-    func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
+    func newEphemeralP256PrivateKey() -> P256.KeyAgreement.PrivateKey {
       return P256.KeyAgreement.PrivateKey()
     }
   }
 
-  extension SecureEnclave.P256.KeyAgreement.PrivateKey: SecureEnclavePrivateKey {
+  extension SecureEnclave.P256.KeyAgreement.PrivateKey: SecureEnclaveP256PrivateKey {
   }
 
 #else
@@ -60,17 +64,19 @@ protocol SecureEnclavePrivateKey {
       return false
     }
 
-    func newSecureEnclavePrivateKey(dataRepresentation: Data) throws -> SecureEnclavePrivateKey {
-      throw Plugin.Error.seUnsupported
-    }
-
-    func newSecureEnclavePrivateKey(accessControl: SecAccessControl) throws
-      -> SecureEnclavePrivateKey
+    func newSecureEnclaveP256PrivateKey(dataRepresentation: Data) throws
+      -> SecureEnclaveP256PrivateKey
     {
       throw Plugin.Error.seUnsupported
     }
 
-    func newEphemeralPrivateKey() -> P256.KeyAgreement.PrivateKey {
+    func newSecureEnclaveP256PrivateKey(accessControl: SecAccessControl) throws
+      -> SecureEnclaveP256PrivateKey
+    {
+      throw Plugin.Error.seUnsupported
+    }
+
+    func newEphemeralP256PrivateKey() -> P256.KeyAgreement.PrivateKey {
       return P256.KeyAgreement.PrivateKey()
     }
   }

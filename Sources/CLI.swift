@@ -30,8 +30,7 @@ struct CLI {
       case .recipients:
         var input = ""
         if let inputFile = options.input {
-          input = try String(
-            contentsOfFile: inputFile)
+          input = try String(contentsOfFile: inputFile, encoding: .utf8)
         } else {
           input = try String(data: FileHandle.standardInput.readToEnd()!, encoding: .utf8)!
         }
