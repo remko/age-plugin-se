@@ -2,7 +2,6 @@ import Foundation
 
 #if !os(Linux) && !os(Windows)
   import CryptoKit
-  import LocalAuthentication
 #else
   import Crypto
 #endif
