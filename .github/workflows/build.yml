@@ -16,19 +16,17 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [macos-14, macos-26, ubuntu-22.04]
+        os: [macos-14, macos-26, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
-      - if: matrix.os == 'macos-14' || matrix.os == 'ubuntu-22.04'
+      - if: matrix.os == 'macos-14'
         run: make patch-package-swift-legacy
       - run: make
       - run: make test COVERAGE=1
       - run: make smoke-test-encrypt
       - run: make lint
-        # We don't have swift-format on Linux yet
-        if: runner.os == 'macOS'
 
       # Packaging
       - uses: actions/setup-go@v5
@@ -45,8 +43,7 @@ jobs:
         env:
           TOOLCHAINS: swift
           ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-        # Having problems on latest macos, so or now limiting this to the older one
-        if: runner.os == 'macOS' && matrix.os == 'macos-14'
+        if: runner.os == 'macOS' && matrix.os != 'macos-14'
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:

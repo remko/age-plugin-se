@@ -6,7 +6,7 @@ let package = Package(
   platforms: [.macOS(.v26)],
   dependencies: [
     // Only used on Linux & Windows
-    .package(url: "https://github.com/apple/swift-crypto.git", "2.0.0"..<"4.0.0")
+    .package(url: "https://github.com/apple/swift-crypto.git", "2.0.0"..<"5.0.0")
   ],
   targets: [
     .executableTarget(

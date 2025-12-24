@@ -1,4 +1,8 @@
-import Foundation
+#if os(Linux)
+  @preconcurrency import Foundation
+#else
+  import Foundation
+#endif
 
 /// Abstraction of a line-based communication stream
 protocol Stream {
