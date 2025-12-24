@@ -1,6 +1,6 @@
 import Foundation
 
-let version = "v0.1.4"
+let version = "v0.2.0"
 
 @main
 struct CLI {
