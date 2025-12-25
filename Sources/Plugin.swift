@@ -21,8 +21,8 @@ class Plugin {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
+    let createdAt = now.ISO8601Format()
     #if !os(Linux) && !os(Windows)
-      let createdAt = now.ISO8601Format()
       var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
       if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
         accessControlFlags.insert(.biometryAny)
@@ -48,10 +48,6 @@ class Plugin {
         throw error!.takeRetainedValue() as Swift.Error
       }
     #else
-      // FIXME: ISO8601Format currently not supported on Linux:
-      //   https://github.com/apple/swift-corelibs-foundation/issues/4618
-      // This code is only reached in unit tests on Linux anyway
-      let createdAt = "1997-02-02T02:26:51Z"
       let secAccessControl = SecAccessControl()
     #endif
 
