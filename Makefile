@@ -2,7 +2,7 @@ PREFIX ?= /usr/local
 AGE ?= age
 SCDOC=$(shell command -v scdoc)
 
-export SOURCE_DATE_EPOCH=1715696361
+export SOURCE_DATE_EPOCH=1766687436
 
 ifneq ($(V),1)
 AT=@
@@ -105,7 +105,7 @@ man: .build/age-plugin-se.1
 
 .build/age-plugin-se.1: Documentation/age-plugin-se.1.scd
 	mkdir -p .build
-	cat $< | sed "s/@VERSION@/$(VERSION)/g" | scdoc > $@.tmp
+	cat $< | sed "s/@VERSION@/$(VERSION)/g" | $(SCDOC) > $@.tmp
 	mv $@.tmp $@
 
 $(BUILD_DIR)/age-plugin-tag $(BUILD_DIR)/age-plugin-tagpq:

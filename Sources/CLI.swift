@@ -137,8 +137,8 @@ struct Options {
   static let help =
     """
     Usage:
-      age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL]
-      age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT]
+      age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--recipient-type RECIPIENT_TYPE]
+      age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT] [--recipient-type RECIPIENT_TYPE]
 
     Description:
       The `keygen` subcommand generates a new private key bound to the current 
@@ -167,6 +167,19 @@ struct Options {
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
       --pq                              Generate post-quantum keys
+
+      --recipient-type RECIPIENT_TYPE   Recipient type to generate.
+
+                                        `tag` recipients use built-in support in
+                                        age (>=v1.3.0), and don't require this plug-in to
+                                        be installed to encrypt.
+
+                                        Post-quantum keys (generated with `--pq`) always
+                                        use the `tag` recipient type.
+
+                                        Supported values: se, tag.
+                                        Default: se.
+                                        The default will change to `tag` in future versions.
 
     Example:
       $ age-plugin-se keygen -o key.txt

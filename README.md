@@ -215,37 +215,52 @@ If you should ever lose access to the device bound to your private key:
    ```
 
 
-### Converting `age-plugin-se` recipients to `age-plugin-yubikey` recipients
+### Converting `age-plugin-se` recipients to `age-plugin-tag` recipients
 
-`age-plugin-se` recipients can be converted to
-[`age-plugin-yubikey`](https://github.com/str4d/age-plugin-yubikey) recipients
-(and vice versa), and be decrypted with the same `age-plugin-se` private key.
-This could be useful if the system on which you want to encrypt your data has
-the `age-plugin-yubikey` plugin installed, but you're unable to install
-`age-plugin-se`. This also obfuscates the fact that your key is protected by
-Apple Secure Enclave.
+`age-plugin-se` can generate two types of recipients (using the
+`--recipient-type` option): `se` (starting with `age1se1...`) and `tag`
+(starting with `age1tag1...`). `se` recipients require the `age-plugin-se`
+plugin to be installed on the system where encryption is performed, whereas
+`tag` recipients can be used natively by age (since age v1.3.0). Besides
+avoiding the need for the plugin, `tag` recipients also obfuscate the fact
+that the key is protected by Apple Secure Enclave.
 
-To convert recipients, you can use the [`ConvertBech32HRP.swift`](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/ConvertBech32HRP.swift) script. 
-For example, to convert the recipient from earlier to a `age-plugin-yubikey` recipient:
+If you have an existing `se` recipient, and you also have the corresponding
+identity, you can retrieve a `tag` recipient for the same key using the
+`age-plugin-se recipients` command:
+
+```
+$ age-plugin-se recipients -i key.txt --recipient-type tag
+age1tag1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
+```
+
+If you don't have the identity, you can use the [`ConvertBech32HRP.swift`](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/ConvertBech32HRP.swift)
+script in this repository. 
+
+For example, to convert the recipient from earlier to a `age-plugin-tag` recipient:
 
 ```
 $ ./Scripts/ConvertBech32HRP.swift \
       age1se1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwg5dz2dp \
-      age1yubikey
-age1yubikey1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
+      age1tag
+age1tag1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgc25f05
 ```
 
 This key can now be used to encrypt data for the same private key:
 ```
-$ tar cvz ~/data | age -r age1yubikey1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
+$ tar cvz ~/data | age -r age1tag1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgc25f05
 $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 ```
+
+Note that, if you have a system without `age-plugin-se` or a recent age version, but you
+do have `age-plugin-yubikey` installed, you can also convert the `se` recipient to 
+`age1yubikey`, and use that to encrypt data for the same private key.
 
 
 ## Usage
 
-    age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL]
-    age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT]
+    age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--recipient-type RECIPIENT_TYPE]
+    age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT] [--recipient-type RECIPIENT_TYPE]
 
     The `keygen` subcommand generates a new private key bound to the current 
     Secure Enclave, with the given access controls, and outputs it to OUTPUT 
@@ -273,6 +288,18 @@ $ age --decrypt -i key.txt data.tar.gz.age > data.tar.gz
 
       --pq                              Generate post-quantum keys
 
+      --recipient-type RECIPIENT_TYPE   Recipient type to generate.
+
+                                        `tag` recipients use built-in support in
+                                        age (>=v1.3.0), and don't require this plug-in to
+                                        be installed to encrypt.
+
+                                        Post-quantum keys (generated with `--pq`) always
+                                        use the `tag` recipient type.
+
+                                        Supported values: se, tag.
+                                        Default: se.
+                                        The default will change to `tag` in future versions.
 
 ## Development
 
