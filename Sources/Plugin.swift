@@ -200,9 +200,6 @@ class Plugin {
             pkEBytes = enc
 
           case .mlkem768p256tag:
-            if recipientKey.mlkem768PublicKey == nil {
-              throw Error.missingPQ
-            }
             let (sharedSecret, enc) = try HPKE.mlkemp256Encap(
               recipientP256Key: recipientKey.p256PublicKey,
               recipientMLKEM768Key: recipientKey.mlkem768PublicKey!,
