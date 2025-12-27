@@ -53,6 +53,7 @@ jobs:
             .build/age-plugin-se-*.zip
             .build/age-plugin-se-*.apk
           include-hidden-files: true
+        if: matrix.os != 'macos-14'
 
       # Build & upload site artifacts
       # Deploy happens in the `build-main` workflow, which only runs on main
