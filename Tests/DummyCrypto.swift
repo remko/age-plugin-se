@@ -70,6 +70,7 @@ class DummyCrypto: Crypto {
     return try! P256.KeyAgreement.PrivateKey(rawRepresentation: dummyKeys.popLast()!)
   }
 
+  @available(macOS 26.0, *)
   func newSecureEnclaveMLKEM768PrivateKey(dataRepresentation: Data) throws
     -> SecureEnclaveMLKEM768PrivateKey
   {
@@ -78,6 +79,7 @@ class DummyCrypto: Crypto {
       crypto: self)
   }
 
+  @available(macOS 26.0, *)
   func newSecureEnclaveMLKEM768PrivateKey(accessControl: SecAccessControl) throws
     -> SecureEnclaveMLKEM768PrivateKey
   {
@@ -87,6 +89,7 @@ class DummyCrypto: Crypto {
       crypto: self)
   }
 
+  @available(macOS 26.0, *)
   func encapsulate(mlkem768Key: MLKEM768.PublicKey) throws -> KEM.EncapsulationResult {
     return dummyEncapsulations.popLast()!
     // let enc = try mlkem768Key.encapsulate()
@@ -119,6 +122,7 @@ struct DummySecureEnclaveP256PrivateKey: SecureEnclaveP256PrivateKey {
   }
 }
 
+@available(macOS 26.0, *)
 struct DummySecureEnclaveMLKEM768PrivateKey: SecureEnclaveMLKEM768PrivateKey {
   var key: MLKEM768.PrivateKey
   var crypto: DummyCrypto

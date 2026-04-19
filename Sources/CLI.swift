@@ -166,7 +166,9 @@ struct Options {
 
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
-      --pq                              Generate post-quantum keys
+      --pq                              Generate post-quantum keys.
+
+                                        Note: requires macOS Tahoe or newer.
 
       --recipient-type RECIPIENT_TYPE   Recipient type to generate.
 

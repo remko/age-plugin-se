@@ -117,7 +117,7 @@ clean:
 	-rm -rf .build manual-tests
 
 patch-package-swift-legacy:
-	cat Package.swift | sed -e 's/\/\/ swift-tools-version: .*/\/\/ swift-tools-version: 5.9/' -e 's/\.macOS(\.v26)/\.macOS(\.v14)/' > Package.swift.tmp
+	cat Package.swift | sed -e 's/\/\/ swift-tools-version: .*/\/\/ swift-tools-version: 5.9/' > Package.swift.tmp
 	mv Package.swift.tmp Package.swift
 
 ################################################################################
