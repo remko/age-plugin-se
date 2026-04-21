@@ -146,10 +146,11 @@ class Plugin {
     }
     for (index, identity) in identities.enumerated() {
       do {
+        let id = try Identity(ageIdentity: identity, crypto: crypto)
         recipientKeys.append(
           (
-            (try Identity(ageIdentity: identity, crypto: crypto)).recipient,
-            .pivp256
+            id.recipient,
+            id.recipient.mlkem768PublicKey != nil ? .mlkem768p256tag : .p256tag
           ))
       } catch {
         errors.append(
