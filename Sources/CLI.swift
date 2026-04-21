@@ -36,7 +36,7 @@ struct CLI {
           input = try String(data: FileHandle.standardInput.readToEnd()!, encoding: .utf8)!
         }
         let result = try plugin.generateRecipients(
-          input: input, recipientType: options.recipientType.recipientType)
+          input: input, recipientType: options.recipientType.recipientType, pq: options.pq)
         if let outputFile = options.output {
           FileManager.default.createFile(
             atPath: outputFile,
