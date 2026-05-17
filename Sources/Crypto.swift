@@ -78,7 +78,14 @@ protocol SecureEnclaveMLKEM768PrivateKey {
 
 #if !os(Linux) && !os(Windows)
   class CryptoKitCrypto: Crypto {
-    let context = LAContext()
+    let context: LAContext = {
+      let ctx = LAContext()
+      if let prompt = ProcessInfo.processInfo.environment["AGE_PLUGIN_SE_PROMPT"],
+         !prompt.isEmpty {
+        ctx.localizedReason = prompt
+      }
+      return ctx
+    }()
 
     var isSecureEnclaveAvailable: Bool {
       return SecureEnclave.isAvailable
