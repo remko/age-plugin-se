@@ -21,7 +21,11 @@ class Plugin {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
     }
-    let createdAt = now.ISO8601Format()
+    #if compiler(>=6.2)
+      let createdAt = now.ISO8601Format()
+    #else
+      let createdAt = ISO8601DateFormatter().string(from: now)
+    #endif
     #if !os(Linux) && !os(Windows)
       var accessControlFlags: SecAccessControlCreateFlags = [.privateKeyUsage]
       if accessControl == .anyBiometry || accessControl == .anyBiometryAndPasscode {
