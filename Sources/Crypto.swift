@@ -81,7 +81,8 @@ protocol SecureEnclaveMLKEM768PrivateKey {
     let context: LAContext = {
       let ctx = LAContext()
       if let prompt = ProcessInfo.processInfo.environment["AGE_PLUGIN_SE_PROMPT"],
-         !prompt.isEmpty {
+        !prompt.isEmpty
+      {
         ctx.localizedReason = prompt
       }
       return ctx
