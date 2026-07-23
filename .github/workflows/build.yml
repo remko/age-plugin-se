@@ -8,7 +8,7 @@ on:
   workflow_call:
     secrets:
       ALPINE_KEY:
-        required: true
+        required: false
   schedule:
     - cron: "0 6 * * 6"
 
@@ -43,7 +43,7 @@ jobs:
         env:
           TOOLCHAINS: swift
           ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-        if: runner.os == 'macOS' && matrix.os == 'macos-26'
+        if: runner.os == 'macOS' && matrix.os == 'macos-26' && env.ALPINE_KEY != ''
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
