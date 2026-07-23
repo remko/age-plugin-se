@@ -15,19 +15,37 @@ final class PluginTests: XCTestCase {
 
   #if !os(Linux) && !os(Windows)
     func testLocalAuthenticationFailuresUseStablePresenceDeniedMarker() {
-      for code in [-1, -2, -3, -4, -5, -6, -7, -8, -9, -1004] {
+      let codes = [
+        PresenceLAErrorCode.authenticationFailed,
+        PresenceLAErrorCode.userCancel,
+        PresenceLAErrorCode.userFallback,
+        PresenceLAErrorCode.systemCancel,
+        PresenceLAErrorCode.passcodeNotSet,
+        PresenceLAErrorCode.biometryNotAvailable,
+        PresenceLAErrorCode.biometryNotEnrolled,
+        PresenceLAErrorCode.biometryLockout,
+        PresenceLAErrorCode.appCancel,
+        PresenceLAErrorCode.companionNotAvailable,
+        PresenceLAErrorCode.biometryNotPaired,
+        PresenceLAErrorCode.biometryDisconnected,
+        PresenceLAErrorCode.notInteractive,
+      ]
+      for code in codes {
         let error = NSError(domain: LAError.errorDomain, code: code)
         XCTAssertEqual(presenceDeniedMarker, pluginErrorMessage(error), "LAError code \(code)")
       }
     }
 
     func testInvalidContextIsNotReportedAsPresenceDenial() {
-      let error = NSError(domain: LAError.errorDomain, code: -10)
+      let error = NSError(
+        domain: LAError.errorDomain, code: PresenceLAErrorCode.invalidContext)
       XCTAssertNotEqual(presenceDeniedMarker, pluginErrorMessage(error))
     }
 
     func testSecurityAuthenticationFailuresUseStablePresenceDeniedMarker() {
-      for code in [errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed] {
+      for code in [
+        errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed, errSecNotAvailable,
+      ] {
         let error = NSError(domain: NSOSStatusErrorDomain, code: Int(code))
         XCTAssertEqual(presenceDeniedMarker, pluginErrorMessage(error), "OSStatus code \(code)")
       }
