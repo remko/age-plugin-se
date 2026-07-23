@@ -1,6 +1,7 @@
 name: Release fork
 
 on:
+  workflow_dispatch:
   release:
     types: [created]
 
@@ -35,6 +36,7 @@ jobs:
           include-hidden-files: true
 
   publish-macos:
+    if: github.event_name == 'release'
     needs: build
     permissions:
       contents: write
