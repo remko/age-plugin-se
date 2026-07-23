@@ -27,6 +27,24 @@ final class CryptoKitCryptoTests: XCTestCase {
     XCTAssertNotEqual(k1.publicKey.rawRepresentation, k2.publicKey.rawRepresentation)
   }
 
+  #if !os(Linux) && !os(Windows)
+    func testSecretScopePromptEnvironmentSetsAuthenticationContext() {
+      let name = "AGE_PLUGIN_SE_PROMPT"
+      let previous = ProcessInfo.processInfo.environment[name]
+      setenv(name, "SecretScope project/profile operation", 1)
+      defer {
+        if let previous {
+          setenv(name, previous, 1)
+        } else {
+          unsetenv(name)
+        }
+      }
+
+      XCTAssertEqual(
+        "SecretScope project/profile operation", CryptoKitCrypto().context.localizedReason)
+    }
+  #endif
+
   // A test to validate that CryptoKit / Swift Crypto cannot do any operations with points at infinity
   func testPointAtInfinity() throws {
     let sk = P256.KeyAgreement.PrivateKey()

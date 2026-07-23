@@ -3,6 +3,10 @@ import XCTest
 @testable import age_plugin_se
 
 final class OptionsTests: XCTestCase {
+  func testFrozenForkVersion() {
+    XCTAssertEqual("v0.2.1-dcosson.2", age_plugin_se.version)
+  }
+
   func testParse_NoArguments() throws {
     let options = try Options.parse(["_"])
     XCTAssertEqual(.help, options.command)
