@@ -4,15 +4,26 @@ on:
   release:
     types: [created]
 
-permissions:
-  contents: write
-
 jobs:
   build:
+    permissions:
+      contents: read
     runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
+      - name: Install pinned legacy Swift toolchain
+        run: |
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            --output swift.pkg \
+            https://download.swift.org/swift-6.1.2-release/xcode/swift-6.1.2-RELEASE/swift-6.1.2-RELEASE-osx.pkg
+          pkgutil --check-signature swift.pkg
+          sudo installer -pkg swift.pkg -target /
+          echo "/Library/Developer/Toolchains/swift-6.1.2-RELEASE.xctoolchain/usr/bin" >> "$GITHUB_PATH"
+      - name: Verify pinned compiler
+        run: |
+          swift --version
+          swift --version | grep -F 'Swift version 6.1.2'
       - run: make patch-package-swift-legacy
       - run: make test
       - run: make package
@@ -25,6 +36,8 @@ jobs:
 
   publish-macos:
     needs: build
+    permissions:
+      contents: write
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/download-artifact@v4

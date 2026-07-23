@@ -78,7 +78,10 @@ endif
 ifeq ($(UNAME_S),Darwin)
 verify-macos-deployment:
 	test -f .build/age-plugin-se
-	test "$$(vtool -show-build .build/age-plugin-se | awk '/minos/{print $$2; exit}')" = "14.0"
+	test "$$(lipo -archs .build/age-plugin-se | tr ' ' '\n' | sort | tr '\n' ' ')" = "arm64 x86_64 "
+	for arch in arm64 x86_64; do \
+		test "$$(vtool -arch $$arch -show-build .build/age-plugin-se | awk '/minos/{print $$2; exit}')" = "14.0"; \
+	done
 else
 verify-macos-deployment:
 	@echo "verify-macos-deployment requires macOS" >&2
