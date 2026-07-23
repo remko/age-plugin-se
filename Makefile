@@ -74,6 +74,17 @@ ifeq ($(COVERAGE),1)
 	swift ./Scripts/ProcessCoverage.swift $$(swift test --show-codecov-path) .build/coverage.json .build/coverage.html .build/coverage.svg
 endif
 
+.PHONY: verify-macos-deployment
+ifeq ($(UNAME_S),Darwin)
+verify-macos-deployment:
+	test -f .build/age-plugin-se
+	test "$$(vtool -show-build .build/age-plugin-se | awk '/minos/{print $$2; exit}')" = "14.0"
+else
+verify-macos-deployment:
+	@echo "verify-macos-deployment requires macOS" >&2
+	@exit 1
+endif
+
 
 .PHONY: test-loop
 test-loop: test

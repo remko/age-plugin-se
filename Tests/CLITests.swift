@@ -25,6 +25,19 @@ final class OptionsTests: XCTestCase {
     XCTAssertEqual(.anyBiometry, options.accessControl)
   }
 
+  func testParse_SecretScopeRequiredAccessControls() throws {
+    let unattended = try Options.parse(["_", "keygen", "--access-control=none"])
+    XCTAssertEqual(.none, unattended.accessControl)
+    XCTAssertEqual(KeyAccessControl.none, unattended.accessControl.keyAccessControl)
+
+    let localPresence = try Options.parse([
+      "_", "keygen", "--access-control=any-biometry-or-passcode",
+    ])
+    XCTAssertEqual(.anyBiometryOrPasscode, localPresence.accessControl)
+    XCTAssertEqual(
+      KeyAccessControl.anyBiometryOrPasscode, localPresence.accessControl.keyAccessControl)
+  }
+
   func testParse_Keygen_PQ() throws {
     let options = try Options.parse(["_", "keygen", "--access-control=any-biometry", "--pq"])
     XCTAssertEqual(.keygen, options.command)

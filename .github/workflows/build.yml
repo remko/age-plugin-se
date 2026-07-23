@@ -34,8 +34,8 @@ jobs:
           go-version: '>=1.22.0'
         if: runner.os == 'macOS'
       - name: Package
-        run: make package
-        if: runner.os != 'Windows'
+        run: make package && make verify-macos-deployment
+        if: runner.os == 'macOS' && matrix.os == 'macos-14'
       - name: Package (Alpine)
         run: |
           echo "$ALPINE_KEY" > Scripts/alpine/r@mko.re-66596f64.rsa
@@ -43,7 +43,7 @@ jobs:
         env:
           TOOLCHAINS: swift
           ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-        if: runner.os == 'macOS' && matrix.os != 'macos-14' && matrix.os != 'macos-15'
+        if: runner.os == 'macOS' && matrix.os == 'macos-26'
       - name: Upload packages
         uses: actions/upload-artifact@v4
         with:
@@ -53,7 +53,7 @@ jobs:
             .build/age-plugin-se-*.zip
             .build/age-plugin-se-*.apk
           include-hidden-files: true
-        if: matrix.os != 'macos-14' && matrix.os != 'macos-15'
+        if: runner.os != 'macOS' || matrix.os == 'macos-14' || matrix.os == 'macos-26'
 
       # Build & upload site artifacts
       # Deploy happens in the `build-main` workflow, which only runs on main

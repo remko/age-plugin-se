@@ -84,7 +84,7 @@ enum HPKE {
     sharedSecret: SymmetricKey, enc: Data
   ) {
     #if compiler(>=6.2)
-      if #unavailable(macOS 21.0) {
+      if #unavailable(macOS 26.0) {
         throw Plugin.Error.pqUnavailable
       }
       let pq = try crypto.encapsulate(mlkem768Key: recipientMLKEM768Key)
@@ -117,7 +117,7 @@ enum HPKE {
     -> SymmetricKey
   {
     #if compiler(>=6.2)
-      if #unavailable(macOS 21.0) {
+      if #unavailable(macOS 26.0) {
         throw Plugin.Error.pqUnavailable
       }
 

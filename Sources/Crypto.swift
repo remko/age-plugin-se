@@ -113,7 +113,7 @@ protocol SecureEnclaveMLKEM768PrivateKey {
       -> SecureEnclaveMLKEM768PrivateKey
     {
       #if compiler(>=6.2)
-        if #unavailable(macOS 21.0) {
+        if #unavailable(macOS 26.0) {
           throw Plugin.Error.pqUnavailable
         }
         return try SecureEnclave.MLKEM768.PrivateKey(
@@ -126,7 +126,7 @@ protocol SecureEnclaveMLKEM768PrivateKey {
       -> SecureEnclaveMLKEM768PrivateKey
     {
       #if compiler(>=6.2)
-        if #unavailable(macOS 21.0) {
+        if #unavailable(macOS 26.0) {
           throw Plugin.Error.pqUnavailable
         }
         return try SecureEnclave.MLKEM768.PrivateKey(
