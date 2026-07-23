@@ -1,0 +1,39 @@
+name: Release fork
+
+on:
+  release:
+    types: [created]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - run: make patch-package-swift-legacy
+      - run: make test
+      - run: make package
+      - run: make verify-macos-deployment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: .build/age-plugin-se-*.zip
+          include-hidden-files: true
+
+  publish-macos:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: dist
+      - name: Create checksums
+        run: cd dist && sha256sum age-plugin-se-*.zip > SHA256SUMS
+      - name: Publish immutable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --repo "${{ github.repository }}" --clobber=false

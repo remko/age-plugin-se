@@ -234,6 +234,22 @@ $ age-plugin-se recipients -i key.txt --recipient-type tag
 age1tag1qgg72x2qfk9wg3wh0qg9u0v7l5dkq4jx69fv80p6wdus3ftg6flwgjgtev8
 ```
 
+### Noninteractive integration contract
+
+Automation may rely on the following stable interface:
+
+* `age-plugin-se --version` prints the exact tagged version.
+* `age-plugin-se keygen --access-control=none -o PATH` creates an unattended
+  identity and prints its public recipient.
+* `age-plugin-se keygen --access-control=any-biometry-or-passcode -o PATH`
+  creates an identity requiring local presence.
+* `age-plugin-se recipients -i PATH` prints the public recipient for an identity.
+* `AGE_PLUGIN_SE_PROMPT` supplies the LocalAuthentication context shown during
+  decryption. It does not bypass or weaken the identity's access control.
+
+Callers must treat identity files as secrets and recipient output as public
+metadata.
+
 If you don't have the identity, you can use the [`ConvertBech32HRP.swift`](https://raw.githubusercontent.com/remko/age-plugin-se/main/Scripts/ConvertBech32HRP.swift)
 script in this repository. 
 
