@@ -4,12 +4,45 @@ import XCTest
 
 #if !os(Linux) && !os(Windows)
   import CryptoKit
+  import LocalAuthentication
+  import Security
 #else
   import Crypto
 #endif
 
 final class PluginTests: XCTestCase {
   var crypto = DummyCrypto()
+
+  #if !os(Linux) && !os(Windows)
+    func testLocalAuthenticationFailuresUseStablePresenceDeniedMarker() {
+      for code in [-1, -2, -3, -4, -5, -6, -7, -8, -9, -1004] {
+        let error = NSError(domain: LAError.errorDomain, code: code)
+        XCTAssertEqual(presenceDeniedMarker, pluginErrorMessage(error), "LAError code \(code)")
+      }
+    }
+
+    func testInvalidContextIsNotReportedAsPresenceDenial() {
+      let error = NSError(domain: LAError.errorDomain, code: -10)
+      XCTAssertNotEqual(presenceDeniedMarker, pluginErrorMessage(error))
+    }
+
+    func testSecurityAuthenticationFailuresUseStablePresenceDeniedMarker() {
+      for code in [errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed] {
+        let error = NSError(domain: NSOSStatusErrorDomain, code: Int(code))
+        XCTAssertEqual(presenceDeniedMarker, pluginErrorMessage(error), "OSStatus code \(code)")
+      }
+    }
+
+    func testUnrelatedSecurityFailureIsNotReportedAsPresenceDenial() {
+      let error = NSError(domain: NSOSStatusErrorDomain, code: Int(errSecDecode))
+      XCTAssertNotEqual(presenceDeniedMarker, pluginErrorMessage(error))
+    }
+  #endif
+
+  func testGenericFailureIsNotReportedAsPresenceDenial() {
+    let error = NSError(domain: "com.example.crypto", code: 1)
+    XCTAssertNotEqual(presenceDeniedMarker, pluginErrorMessage(error))
+  }
 
   func testRecipientSHA256Tag() throws {
     let key = Recipient(
@@ -1263,7 +1296,7 @@ final class IdentityV1Tests: XCTestCase {
         -> ok
 
         """)
-    crypto.failingOperations = true
+    crypto.operationError = DummyCryptoError.dummyError
     plugin.runIdentityV1()
 
     XCTAssertEqual(
@@ -1276,6 +1309,35 @@ final class IdentityV1Tests: XCTestCase {
 
       """, stream.output)
   }
+
+  #if !os(Linux) && !os(Windows)
+    func testAuthenticationFailureEmitsStableMarkerThroughPluginProtocol() throws {
+      let plugin = Plugin(crypto: crypto, stream: stream)
+      stream.add(
+        input:
+          """
+          -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
+
+          -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
+          SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
+          -> done
+
+          -> ok
+
+          """)
+      crypto.operationError = NSError(
+        domain: NSOSStatusErrorDomain, code: Int(errSecUserCanceled))
+      plugin.runIdentityV1()
+
+      XCTAssertEqual(
+        """
+        -> msg
+        U0VDUkVUU0NPUEVfUFJFU0VOQ0VfREVOSUVEX1Yx
+        -> done
+
+        """, stream.output)
+    }
+  #endif
 
   func testUnknownStanzas() throws {
     let plugin = Plugin(crypto: crypto, stream: stream)

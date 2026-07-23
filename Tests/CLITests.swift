@@ -4,7 +4,7 @@ import XCTest
 
 final class OptionsTests: XCTestCase {
   func testFrozenForkVersion() {
-    XCTAssertEqual("v0.2.1-dcosson.2", age_plugin_se.version)
+    XCTAssertEqual("v0.2.1-dcosson.3", age_plugin_se.version)
   }
 
   func testParse_NoArguments() throws {

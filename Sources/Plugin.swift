@@ -2,9 +2,39 @@ import Foundation
 
 #if !os(Linux) && !os(Windows)
   import CryptoKit
+  import LocalAuthentication
+  import Security
 #else
   import Crypto
 #endif
+
+let presenceDeniedMarker = "SECRETSCOPE_PRESENCE_DENIED_V1"
+
+func pluginErrorMessage(_ error: Swift.Error) -> String {
+  #if !os(Linux) && !os(Windows)
+    let nsError = error as NSError
+    if nsError.domain == LAError.errorDomain {
+      // LAError.Code raw values are stable across the supported macOS range.
+      // invalidContext (-10) is deliberately excluded: it is a helper defect,
+      // not an operator denial or unavailable authentication ceremony.
+      switch nsError.code {
+      case -1, -2, -3, -4, -5, -6, -7, -8, -9, -1004:
+        return presenceDeniedMarker
+      default:
+        break
+      }
+    }
+    if nsError.domain == NSOSStatusErrorDomain {
+      switch OSStatus(nsError.code) {
+      case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed:
+        return presenceDeniedMarker
+      default:
+        break
+      }
+    }
+  #endif
+  return error.localizedDescription
+}
 
 class Plugin {
   var crypto: Crypto
@@ -395,7 +425,7 @@ class Plugin {
               body: unwrappedKey
             )
           } catch {
-            Stanza(type: "msg", body: Data(error.localizedDescription.utf8)).writeTo(
+            Stanza(type: "msg", body: Data(pluginErrorMessage(error).utf8)).writeTo(
               stream: stream)
             let resp = try! Stanza.readFrom(stream: self.stream)
             assert(resp.type == "ok")

@@ -48,7 +48,7 @@ class DummyCrypto: Crypto {
   ]
 
   var isSecureEnclaveAvailable = true
-  var failingOperations = false
+  var operationError: Swift.Error?
 
   func newSecureEnclaveP256PrivateKey(dataRepresentation: Data) throws
     -> SecureEnclaveP256PrivateKey
@@ -112,8 +112,8 @@ struct DummySecureEnclaveP256PrivateKey: SecureEnclaveP256PrivateKey {
   func sharedSecretFromKeyAgreement(with publicKeyShare: P256.KeyAgreement.PublicKey) throws
     -> SharedSecret
   {
-    if crypto.failingOperations {
-      throw DummyCryptoError.dummyError
+    if let operationError = crypto.operationError {
+      throw operationError
     }
     return try key.sharedSecretFromKeyAgreement(with: publicKeyShare)
   }
