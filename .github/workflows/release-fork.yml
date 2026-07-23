@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     branches: [main]
-  release:
-    types: [created]
+    tags: ['v*-dcosson.*']
 
 jobs:
   build:
@@ -38,7 +37,7 @@ jobs:
           include-hidden-files: true
 
   publish-macos:
-    if: github.event_name == 'release'
+    if: startsWith(github.ref, 'refs/tags/')
     needs: build
     permissions:
       contents: write
@@ -50,7 +49,17 @@ jobs:
           path: dist
       - name: Create checksums
         run: cd dist && sha256sum age-plugin-se-*.zip > SHA256SUMS
+      - name: Create immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
+            --verify-tag \
+            --title "age-plugin-se $TAG" \
+            --notes "SecretScope-owned universal macOS release (arm64/x86_64, minimum macOS 14.0). Built with the pinned legacy Swift toolchain and frozen access-control/prompt integration contract."
       - name: Publish immutable assets
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.event.release.tag_name }}" dist/* --repo "${{ github.repository }}" --clobber=false
+        run: gh release upload "${{ github.ref_name }}" dist/* --repo "${{ github.repository }}" --clobber=false
