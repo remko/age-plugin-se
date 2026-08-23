@@ -580,14 +580,71 @@ final class RecipientV1Tests: XCTestCase {
         """)
     plugin.runRecipientV1()
 
+    // Non-PQ identities used as their own recipient must use p256tag (HPKE), not piv-p256.
     XCTAssertEqual(
       """
-      -> recipient-stanza 0 piv-p256 14yi6A Az7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7
-      SLgnrcnHLaJHCx+fwSEWWoflDgL91oDGCGNwb2YaT+4
+      -> recipient-stanza 0 p256tag NDTf9g BD7IeMpB4oX0CHt/Bc9xzk6x1K262zNxoUtfAikZa5T7aUSkQuuvOANb1o+BKtf/4/F++4nJgRQ0PgIyFJq8i88
+      14bmQarAgrOM0M27KRHYp9RzNYlcv3pJgRm9sTCB08c
       -> done
 
       """, stream.output)
   }
+
+  #if compiler(>=6.2)
+    func testIdentity_PQ() throws {
+      let plugin = Plugin(crypto: crypto, stream: stream)
+
+      stream.add(
+        input:
+          """
+          -> add-identity AGE-PLUGIN-SE-1QQSRWEV3HTW9M4Z8WJTC5C4GPTYD5Q5CFYCMHF0P8SZCQ6EVK4AKYDQQGQTXY09DTD6G9NF4GDLPJK5RKC4KHE6GJW5ZK3QT5M026WN6LKLNULCPFD57EE5WZWWKMGPUZJG2Q6Z235TZMSPLG50WQUC875N87PJ6685E57
+
+          -> wrap-file-key
+          AAAAAAAAAAAAAAAAAAAAAQ
+          -> done
+
+          -> ok
+
+          """)
+      plugin.runRecipientV1()
+
+      // PQ identities used as their own recipient must use mlkem768p256tag, not piv-p256.
+      let stanzaHeader = stream.output.split(whereSeparator: \.isNewline).first!
+      XCTAssertTrue(stanzaHeader.hasPrefix("-> recipient-stanza 0 mlkem768p256tag "))
+    }
+
+    func testIdentity_MixedPQAndNonPQ() throws {
+      let plugin = Plugin(crypto: crypto, stream: stream)
+
+      stream.add(
+        input:
+          """
+          -> add-identity AGE-PLUGIN-SE-18YNMANPJKHE2ZAZJHRCKZKFXCT78YYWUTY0F730TMTZFV0CM9YHSRP8GPG
+
+          -> add-identity AGE-PLUGIN-SE-1QQSRWEV3HTW9M4Z8WJTC5C4GPTYD5Q5CFYCMHF0P8SZCQ6EVK4AKYDQQGQTXY09DTD6G9NF4GDLPJK5RKC4KHE6GJW5ZK3QT5M026WN6LKLNULCPFD57EE5WZWWKMGPUZJG2Q6Z235TZMSPLG50WQUC875N87PJ6685E57
+
+          -> wrap-file-key
+          AAAAAAAAAAAAAAAAAAAAAQ
+          -> done
+
+          -> ok
+
+          -> ok
+
+          """)
+      plugin.runRecipientV1()
+
+      // Each identity must use the stanza type matching its own key material, regardless of
+      // the other identities present: the non-PQ identity gets p256tag and the PQ identity
+      // gets mlkem768p256tag. Neither should fall back to piv-p256.
+      let headers = stream.output.split(whereSeparator: \.isNewline).filter {
+        $0.hasPrefix("-> recipient-stanza")
+      }
+      XCTAssertEqual(2, headers.count)
+      XCTAssertTrue(headers[0].hasPrefix("-> recipient-stanza 0 p256tag "))
+      XCTAssertTrue(headers[1].hasPrefix("-> recipient-stanza 0 mlkem768p256tag "))
+    }
+  #endif
 
   func testMultipleRecipients() throws {
     let plugin = Plugin(crypto: crypto, stream: stream)
