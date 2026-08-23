@@ -1,0 +1,65 @@
+name: Release fork
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    tags: ['v*-dcosson.*']
+
+jobs:
+  build:
+    permissions:
+      contents: read
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - name: Install pinned legacy Swift toolchain
+        run: |
+          curl --fail --location --proto '=https' --tlsv1.2 \
+            --output swift.pkg \
+            https://download.swift.org/swift-6.1.2-release/xcode/swift-6.1.2-RELEASE/swift-6.1.2-RELEASE-osx.pkg
+          pkgutil --check-signature swift.pkg
+          sudo installer -pkg swift.pkg -target /
+          echo "/Library/Developer/Toolchains/swift-6.1.2-RELEASE.xctoolchain/usr/bin" >> "$GITHUB_PATH"
+      - name: Verify pinned compiler
+        run: |
+          swift --version
+          swift --version | grep -F 'Swift version 6.1.2'
+      - run: make patch-package-swift-legacy
+      - run: make test
+      - run: make package
+      - run: make verify-macos-deployment
+      - uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          path: .build/age-plugin-se-*.zip
+          include-hidden-files: true
+
+  publish-macos:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: dist
+      - name: Create checksums
+        run: cd dist && sha256sum age-plugin-se-*.zip > SHA256SUMS
+      - name: Create immutable release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
+            --verify-tag \
+            --title "age-plugin-se $TAG" \
+            --notes "SecretScope-owned universal macOS release (arm64/x86_64, minimum macOS 14.0). Built with the pinned legacy Swift toolchain and frozen access-control/prompt integration contract."
+      - name: Publish immutable assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" dist/* --repo "${{ github.repository }}" --clobber=false

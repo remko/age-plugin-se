@@ -2,9 +2,70 @@ import Foundation
 
 #if !os(Linux) && !os(Windows)
   import CryptoKit
+  import LocalAuthentication
+  import Security
 #else
   import Crypto
 #endif
+
+let presenceDeniedMarker = "SECRETSCOPE_PRESENCE_DENIED_V1"
+
+// Raw values keep this source buildable with the macOS 14 compatibility SDK
+// while naming cases added to newer LocalAuthentication SDKs.
+enum PresenceLAErrorCode {
+  static let authenticationFailed = -1
+  static let userCancel = -2
+  static let userFallback = -3
+  static let systemCancel = -4
+  static let passcodeNotSet = -5
+  static let biometryNotAvailable = -6
+  static let biometryNotEnrolled = -7
+  static let biometryLockout = -8
+  static let appCancel = -9
+  static let invalidContext = -10
+  static let companionNotAvailable = -11
+  static let biometryNotPaired = -12
+  static let biometryDisconnected = -13
+  static let notInteractive = -1004
+}
+
+func pluginErrorMessage(_ error: Swift.Error) -> String {
+  #if !os(Linux) && !os(Windows)
+    let nsError = error as NSError
+    if nsError.domain == LAError.errorDomain {
+      // invalidContext is deliberately excluded: it is a helper defect, not an
+      // operator denial or unavailable authentication ceremony.
+      switch nsError.code {
+      case PresenceLAErrorCode.authenticationFailed,
+        PresenceLAErrorCode.userCancel,
+        PresenceLAErrorCode.userFallback,
+        PresenceLAErrorCode.systemCancel,
+        PresenceLAErrorCode.passcodeNotSet,
+        PresenceLAErrorCode.biometryNotAvailable,
+        PresenceLAErrorCode.biometryNotEnrolled,
+        PresenceLAErrorCode.biometryLockout,
+        PresenceLAErrorCode.appCancel,
+        PresenceLAErrorCode.companionNotAvailable,
+        PresenceLAErrorCode.biometryNotPaired,
+        PresenceLAErrorCode.biometryDisconnected,
+        PresenceLAErrorCode.notInteractive:
+        return presenceDeniedMarker
+      default:
+        break
+      }
+    }
+    if nsError.domain == NSOSStatusErrorDomain {
+      switch OSStatus(nsError.code) {
+      case errSecUserCanceled, errSecAuthFailed, errSecInteractionNotAllowed,
+        errSecNotAvailable:
+        return presenceDeniedMarker
+      default:
+        break
+      }
+    }
+  #endif
+  return error.localizedDescription
+}
 
 class Plugin {
   var crypto: Crypto
@@ -396,7 +457,7 @@ class Plugin {
               body: unwrappedKey
             )
           } catch {
-            Stanza(type: "msg", body: Data(error.localizedDescription.utf8)).writeTo(
+            Stanza(type: "msg", body: Data(pluginErrorMessage(error).utf8)).writeTo(
               stream: stream)
             let resp = try! Stanza.readFrom(stream: self.stream)
             assert(resp.type == "ok")

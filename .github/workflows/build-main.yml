@@ -15,15 +15,3 @@ jobs:
     uses: ./.github/workflows/build.yml
     secrets:
       ALPINE_KEY: ${{ secrets.ALPINE_KEY }}
-
-
-  deploy-pages:
-    needs: build
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: macos-26
-    steps:
-      - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4

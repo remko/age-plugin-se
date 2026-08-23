@@ -3,6 +3,10 @@ import XCTest
 @testable import age_plugin_se
 
 final class OptionsTests: XCTestCase {
+  func testFrozenForkVersion() {
+    XCTAssertEqual("v0.2.1-dcosson.3", age_plugin_se.version)
+  }
+
   func testParse_NoArguments() throws {
     let options = try Options.parse(["_"])
     XCTAssertEqual(.help, options.command)
@@ -23,6 +27,19 @@ final class OptionsTests: XCTestCase {
     XCTAssertEqual(.keygen, options.command)
     XCTAssertEqual(false, options.pq)
     XCTAssertEqual(.anyBiometry, options.accessControl)
+  }
+
+  func testParse_SecretScopeRequiredAccessControls() throws {
+    let unattended = try Options.parse(["_", "keygen", "--access-control=none"])
+    XCTAssertEqual(.none, unattended.accessControl)
+    XCTAssertEqual(KeyAccessControl.none, unattended.accessControl.keyAccessControl)
+
+    let localPresence = try Options.parse([
+      "_", "keygen", "--access-control=any-biometry-or-passcode",
+    ])
+    XCTAssertEqual(.anyBiometryOrPasscode, localPresence.accessControl)
+    XCTAssertEqual(
+      KeyAccessControl.anyBiometryOrPasscode, localPresence.accessControl.keyAccessControl)
   }
 
   func testParse_Keygen_PQ() throws {
