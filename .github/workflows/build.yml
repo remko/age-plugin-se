@@ -71,7 +71,7 @@ jobs:
   # Running swift from the Makefile doesn't work (yet), so we have a separate
   # build procedure for windows.
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup
