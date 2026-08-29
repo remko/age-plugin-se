@@ -286,7 +286,9 @@ do have `age-plugin-yubikey` installed, you can also convert the `se` recipient 
 
       -i, --input INPUT                 Read data from the file at path INPUT
 
-      --pq                              Generate post-quantum keys
+      --pq                              Generate post-quantum keys.
+
+                                        Note: requires macOS Tahoe or newer.
 
       --recipient-type RECIPIENT_TYPE   Recipient type to generate.
 

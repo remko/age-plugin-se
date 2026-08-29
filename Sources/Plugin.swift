@@ -70,7 +70,11 @@ class Plugin {
     let ageRecipient: String
     var recipientsStr = "# public key: \(identity.recipient.ageRecipient(type: recipientType))"
     if pq {
-      ageRecipient = try! identity.recipient.ageTagPQRecipient
+      if #available(macOS 26.0, *) {
+        ageRecipient = try identity.pqRecipient(crypto: self.crypto).ageTagPQRecipient
+      } else {
+        throw Error.pqUnavailable
+      }
       recipientsStr += "\n# public key (post-quantum): \(ageRecipient)"
     } else {
       ageRecipient = identity.recipient.ageRecipient(type: recipientType)
@@ -98,7 +102,11 @@ class Plugin {
       let sl = String(l.trimmingCharacters(in: .whitespacesAndNewlines))
       let identity = try Identity(ageIdentity: sl, crypto: self.crypto)
       if pq {
-        recipients.append(try identity.recipient.ageTagPQRecipient)
+        if #available(macOS 26.0, *) {
+          recipients.append(try identity.pqRecipient(crypto: self.crypto).ageTagPQRecipient)
+        } else {
+          throw Error.pqUnavailable
+        }
       } else {
         recipients.append(identity.recipient.ageRecipient(type: recipientType))
       }
@@ -205,16 +213,20 @@ class Plugin {
             pkEBytes = enc
 
           case .mlkem768p256tag:
-            let (sharedSecret, enc) = try HPKE.mlkemp256Encap(
-              recipientP256Key: recipientKey.p256PublicKey,
-              recipientMLKEM768Key: recipientKey.mlkem768PublicKey!,
-              crypto: crypto)
-            (wrapKey, nonce) = HPKE.context(
-              kem: .mlkem768P256,
-              sharedSecret: sharedSecret,
-              info: "age-encryption.org/mlkem768p256tag".data(using: .utf8)!)
-            tag = recipientKey.mlkem768p256HKDFTag(using: enc)
-            pkEBytes = enc
+            if #available(macOS 26.0, *) {
+              let (sharedSecret, enc) = try HPKE.mlkemp256Encap(
+                recipientP256Key: recipientKey.p256PublicKey,
+                recipientMLKEM768Key: try recipientKey.mlkem768PublicKey(),
+                crypto: crypto)
+              (wrapKey, nonce) = HPKE.context(
+                kem: .mlkem768P256,
+                sharedSecret: sharedSecret,
+                info: "age-encryption.org/mlkem768p256tag".data(using: .utf8)!)
+              tag = recipientKey.mlkem768p256HKDFTag(using: enc)
+              pkEBytes = enc
+            } else {
+              throw Error.pqUnavailable
+            }
           }
 
           let sealedBox = try ChaChaPoly.seal(fileKey, using: wrapKey, nonce: nonce)
@@ -332,13 +344,22 @@ class Plugin {
         for identity in identityKeys {
           do {
             let shareKeyData = Data(base64RawEncoded: share)!
-            let identityTag =
-              (type == .p256tag
-              ? identity.recipient.p256HKDFTag(using: shareKeyData)
-              : type == .mlkem768p256tag
-                ? identity.recipient.mlkem768p256HKDFTag(using: shareKeyData)
-                : identity.recipient.sha256Tag)
-              .base64RawEncodedString()
+            let identityTag: String
+            switch type {
+            case .p256tag:
+              identityTag = identity.recipient.p256HKDFTag(using: shareKeyData)
+                .base64RawEncodedString()
+            case .mlkem768p256tag:
+              if #available(macOS 26.0, *) {
+                identityTag = try identity.pqRecipient(crypto: self.crypto).mlkem768p256HKDFTag(
+                  using: shareKeyData)
+                  .base64RawEncodedString()
+              } else {
+                throw Error.pqUnavailable
+              }
+            case .pivp256:
+              identityTag = identity.recipient.sha256Tag.base64RawEncodedString()
+            }
             if identityTag != tag {
               continue
             }
@@ -378,17 +399,18 @@ class Plugin {
                 info: "age-encryption.org/p256tag".data(using: .utf8)!)
 
             case .mlkem768p256tag:
-              if identity.mlkemPrivateKey == nil {
-                throw Error.missingPQ
+              if #available(macOS 26.0, *) {
+                let sharedSecret = try HPKE.mlkemp256Decap(
+                  enc: shareKeyData,
+                  recipientP256Key: identity.p256PrivateKey,
+                  recipientMLKEM768Key: try identity.mlkemPrivateKey(crypto: self.crypto))
+                (wrapKey, nonce) = HPKE.context(
+                  kem: .mlkem768P256,
+                  sharedSecret: sharedSecret,
+                  info: "age-encryption.org/mlkem768p256tag".data(using: .utf8)!)
+              } else {
+                throw Error.pqUnavailable
               }
-              let sharedSecret = try HPKE.mlkemp256Decap(
-                enc: shareKeyData,
-                recipientP256Key: identity.p256PrivateKey,
-                recipientMLKEM768Key: identity.mlkemPrivateKey!)
-              (wrapKey, nonce) = HPKE.context(
-                kem: .mlkem768P256,
-                sharedSecret: sharedSecret,
-                info: "age-encryption.org/mlkem768p256tag".data(using: .utf8)!)
             }
 
             let unwrappedKey = try ChaChaPoly.open(
@@ -520,7 +542,7 @@ enum RecipientStanzaType: String {
 
 struct Recipient {
   let p256PublicKey: P256.KeyAgreement.PublicKey
-  let mlkem768PublicKey: MLKEM768.PublicKey?
+  let mlkem768PublicKeyData: Data?
 
   init(ageRecipient: String) throws {
     let id = try Bech32().decode(ageRecipient)
@@ -530,24 +552,22 @@ struct Recipient {
         throw Plugin.Error.invalidRecipient
       }
       self.p256PublicKey = try P256.KeyAgreement.PublicKey(compressedRepresentation: id.data)
-      self.mlkem768PublicKey = nil
+      self.mlkem768PublicKeyData = nil
     case "age1tagpq":
       if id.data.count != 1184 + 65 {
         throw Plugin.Error.invalidRecipient
       }
       self.p256PublicKey = try P256.KeyAgreement.PublicKey(
         x963Representation: id.data[1184...])
-      self.mlkem768PublicKey = try MLKEM768.PublicKey(
-        rawRepresentation: id.data[..<1184])
-      break
+      self.mlkem768PublicKeyData = Data(id.data[..<1184])
     default:
       throw Plugin.Error.unknownHRP(id.hrp)
     }
   }
 
-  init(p256PublicKey: P256.KeyAgreement.PublicKey, mlkem768PublicKey: MLKEM768.PublicKey? = nil) {
+  init(p256PublicKey: P256.KeyAgreement.PublicKey, mlkem768PublicKeyData: Data? = nil) {
     self.p256PublicKey = p256PublicKey
-    self.mlkem768PublicKey = mlkem768PublicKey
+    self.mlkem768PublicKeyData = mlkem768PublicKeyData
   }
 
   var sha256Tag: Data {
@@ -576,21 +596,29 @@ struct Recipient {
       hrp: "age1\(type.rawValue)", data: self.p256PublicKey.compressedRepresentation)
   }
 
+  @available(macOS 26.0, *)
+  func mlkem768PublicKey() throws -> MLKEM768.PublicKey {
+    guard let mlkem768PublicKeyData = self.mlkem768PublicKeyData else {
+      throw Plugin.Error.missingPQ
+    }
+    return try MLKEM768.PublicKey(rawRepresentation: mlkem768PublicKeyData)
+  }
+
   var ageTagPQRecipient: String {
     get throws {
-      guard let mlkem768PublicKey = self.mlkem768PublicKey else {
+      guard let mlkem768PublicKeyData = self.mlkem768PublicKeyData else {
         throw Plugin.Error.missingPQ
       }
       return Bech32().encode(
         hrp: "age1tagpq",
-        data: mlkem768PublicKey.rawRepresentation + self.p256PublicKey.x963Representation)
+        data: mlkem768PublicKeyData + self.p256PublicKey.x963Representation)
     }
   }
 }
 
 struct Identity {
   let p256PrivateKey: SecureEnclaveP256PrivateKey
-  let mlkemPrivateKey: SecureEnclaveMLKEM768PrivateKey?
+  let mlkemPrivateKeyData: Data?
 
   init(ageIdentity: String, crypto: Crypto) throws {
     let id = try Bech32().decode(ageIdentity)
@@ -600,28 +628,31 @@ struct Identity {
     do {
       let (p256Data, mlkemData) = Identity.parseData(id.data)
       if mlkemData != nil {
-        let p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(
+        self.p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(
           dataRepresentation: p256Data)
-        self.mlkemPrivateKey = try crypto.newSecureEnclaveMLKEM768PrivateKey(
-          dataRepresentation: mlkemData!)
-        self.p256PrivateKey = p256PrivateKey
+        self.mlkemPrivateKeyData = Data(mlkemData!)
         return
       }
     } catch {
       // Fall through to non-pq format
     }
     self.p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(dataRepresentation: id.data)
-    self.mlkemPrivateKey = nil
+    self.mlkemPrivateKeyData = nil
   }
 
   init(accessControl: SecAccessControl, pq: Bool, crypto: Crypto) throws {
     self.p256PrivateKey = try crypto.newSecureEnclaveP256PrivateKey(
       accessControl: accessControl)
     if pq {
-      self.mlkemPrivateKey = try crypto.newSecureEnclaveMLKEM768PrivateKey(
-        accessControl: accessControl)
+      if #available(macOS 26.0, *) {
+        self.mlkemPrivateKeyData = try crypto.newSecureEnclaveMLKEM768PrivateKey(
+          accessControl: accessControl
+        ).dataRepresentation
+      } else {
+        throw Plugin.Error.pqUnavailable
+      }
     } else {
-      self.mlkemPrivateKey = nil
+      self.mlkemPrivateKeyData = nil
     }
   }
 
@@ -660,22 +691,37 @@ struct Identity {
   }
 
   var recipient: Recipient {
+    return Recipient(p256PublicKey: self.p256PrivateKey.publicKey)
+  }
+
+  @available(macOS 26.0, *)
+  func mlkemPrivateKey(crypto: Crypto) throws -> SecureEnclaveMLKEM768PrivateKey {
+    guard let mlkemPrivateKeyData = self.mlkemPrivateKeyData else {
+      throw Plugin.Error.missingPQ
+    }
+    return try crypto.newSecureEnclaveMLKEM768PrivateKey(
+      dataRepresentation: mlkemPrivateKeyData)
+  }
+
+  @available(macOS 26.0, *)
+  func pqRecipient(crypto: Crypto) throws -> Recipient {
+    let mlkemPrivateKey = try self.mlkemPrivateKey(crypto: crypto)
     return Recipient(
       p256PublicKey: self.p256PrivateKey.publicKey,
-      mlkem768PublicKey: self.mlkemPrivateKey?.publicKey)
+      mlkem768PublicKeyData: mlkemPrivateKey.publicKey.rawRepresentation)
   }
 
   var ageIdentity: String {
-    var data: Data
-    if self.mlkemPrivateKey == nil {
-      data = self.p256PrivateKey.dataRepresentation
-    } else {
+    if let mlkemPrivateKeyData = self.mlkemPrivateKeyData {
       let p256data = self.p256PrivateKey.dataRepresentation
-      let mlkemdata = self.mlkemPrivateKey!.dataRepresentation
-      data =
+      let data =
         Data([UInt8(p256data.count >> 8), UInt8(p256data.count & 0xFF)]) + p256data
-        + Data([UInt8(mlkemdata.count >> 8), UInt8(mlkemdata.count & 0xFF)]) + mlkemdata
+        + Data([UInt8(mlkemPrivateKeyData.count >> 8), UInt8(mlkemPrivateKeyData.count & 0xFF)])
+        + mlkemPrivateKeyData
+      return Bech32().encode(hrp: "AGE-PLUGIN-SE-", data: data)
     }
-    return Bech32().encode(hrp: "AGE-PLUGIN-SE-", data: data)
+    return Bech32().encode(
+      hrp: "AGE-PLUGIN-SE-",
+      data: self.p256PrivateKey.dataRepresentation)
   }
 }

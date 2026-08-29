@@ -13,7 +13,7 @@ extension Data {
   }
 }
 
-if #available(macOS 21.0, *) {
+if #available(macOS 26.0, *) {
   for _ in 1...10 {
     let privateKey = try! CryptoKit.MLKEM768.PrivateKey()
     print(String(data: privateKey.seedRepresentation.base64RawEncodedData(), encoding: .utf8)!)
