@@ -142,6 +142,28 @@ Secure Enclave to decrypt it:
 <img src="https://raw.githubusercontent.com/remko/age-plugin-se/main/Documentation/img/screenshot-biometry.png" alt="Biometry prompt" width=350/>
 </div>
 
+On macOS, the prompt also tells you which key is being used, which programs
+asked for it, and optionally why, so that you don't approve a request without
+knowing what it is:
+
+- To show a name instead of the key's recipient, list it in
+  `~/.config/age-plugin-se/names` (or `$XDG_CONFIG_HOME/age-plugin-se/names`),
+  one key per line:
+
+      age1se1qfn44rsw0xvmez3pky46nghmnd5up0jpj97nd39zptlh83a0nja6skde3ak Backup key
+
+- The prompt lists the names of the processes that started the decryption,
+  such as the shell or the script that ran `age`.
+
+- A script can add a short note by setting `AGE_SE_REASON`:
+
+      $ AGE_SE_REASON="restore backup" age --decrypt -i key.txt -o data.tar.gz data.tar.gz.age
+
+These lines help you notice requests you didn't expect. They are not a
+security boundary: any program running as you can edit the names file, choose
+its own process name and note, or use the key from the identity file directly.
+Keep the identity file where only the programs you trust can read it.
+
 
 ### Using `age-plugin-se` with passage
 
