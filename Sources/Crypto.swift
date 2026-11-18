@@ -59,6 +59,13 @@ protocol Crypto {
   func newSecureEnclaveMLKEM768PrivateKey(accessControl: SecAccessControl) throws
     -> SecureEnclaveMLKEM768PrivateKey
   func encapsulate(mlkem768Key: MLKEM768.PublicKey) throws -> KEM.EncapsulationResult
+
+  /// Text shown in the system authentication prompt for the next key operation.
+  func setAuthenticationReason(_ reason: String)
+}
+
+extension Crypto {
+  func setAuthenticationReason(_ reason: String) {}
 }
 
 protocol SecureEnclaveP256PrivateKey {
@@ -79,6 +86,10 @@ protocol SecureEnclaveMLKEM768PrivateKey {
 #if !os(Linux) && !os(Windows)
   class CryptoKitCrypto: Crypto {
     let context = LAContext()
+
+    func setAuthenticationReason(_ reason: String) {
+      context.localizedReason = reason
+    }
 
     var isSecureEnclaveAvailable: Bool {
       return SecureEnclave.isAvailable

@@ -342,6 +342,7 @@ class Plugin {
             if identityTag != tag {
               continue
             }
+            crypto.setAuthenticationReason(AuthenticationReason.describe(identity.recipient))
 
             var nonce: ChaChaPoly.Nonce
             var wrapKey: SymmetricKey
