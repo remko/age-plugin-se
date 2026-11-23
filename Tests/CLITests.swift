@@ -23,6 +23,23 @@ final class OptionsTests: XCTestCase {
     XCTAssertEqual(.keygen, options.command)
     XCTAssertEqual(false, options.pq)
     XCTAssertEqual(.anyBiometry, options.accessControl)
+    XCTAssertEqual(.whenUnlocked, options.accessibility)
+  }
+
+  func testParse_Keygen_AfterFirstUnlock() throws {
+    let options = try Options.parse([
+      "_", "keygen", "--access-control=none", "--accessibility=after-first-unlock",
+    ])
+    XCTAssertEqual(.keygen, options.command)
+    XCTAssertEqual(Options.AccessControl.none, options.accessControl)
+    XCTAssertEqual(.afterFirstUnlock, options.accessibility)
+  }
+
+  func testParse_KeyGen_InvalidAccessibility() throws {
+    XCTAssertThrowsError(try Options.parse(["_", "keygen", "--accessibility=always"])) { error in
+      XCTAssertEqual(
+        Options.Error.invalidValue("--accessibility", "always"), error as! Options.Error)
+    }
   }
 
   func testParse_Keygen_PQ() throws {

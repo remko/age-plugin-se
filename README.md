@@ -259,7 +259,7 @@ do have `age-plugin-yubikey` installed, you can also convert the `se` recipient 
 
 ## Usage
 
-    age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--recipient-type RECIPIENT_TYPE]
+    age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--accessibility ACCESSIBILITY] [--recipient-type RECIPIENT_TYPE]
     age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT] [--recipient-type RECIPIENT_TYPE]
 
     The `keygen` subcommand generates a new private key bound to the current 
@@ -281,6 +281,16 @@ do have `age-plugin-yubikey` installed, you can also convert the `se` recipient 
 
             When using current biometry, adding or removing a fingerprint stops the
             key from working. Removing an added fingerprint enables the key again. 
+
+      --accessibility ACCESSIBILITY     When the generated key can be used.
+
+            Supported values: when-unlocked, after-first-unlock
+            Default: when-unlocked.
+
+            `when-unlocked` refuses while the screen is locked.
+            `after-first-unlock` works while the screen is locked, once the
+            device has been unlocked one time since boot. Use it for unattended
+            jobs, with access control `none`.
 
       -o, --output OUTPUT               Write the result to the file at path OUTPUT
 
