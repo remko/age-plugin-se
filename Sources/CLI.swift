@@ -16,6 +16,7 @@ struct CLI {
       case .keygen:
         let result = try plugin.generateKey(
           accessControl: options.accessControl.keyAccessControl,
+          accessibility: options.accessibility.keyAccessibility,
           recipientType: options.recipientType.recipientType, now: Date(),
           pq: options.pq)
         if let outputFile = options.output {
@@ -120,6 +121,19 @@ struct Options {
   }
   var accessControl = AccessControl.anyBiometryOrPasscode
 
+  enum Accessibility: String {
+    case whenUnlocked = "when-unlocked"
+    case afterFirstUnlock = "after-first-unlock"
+
+    var keyAccessibility: KeyAccessibility {
+      switch self {
+      case .whenUnlocked: return .whenUnlocked
+      case .afterFirstUnlock: return .afterFirstUnlock
+      }
+    }
+  }
+  var accessibility = Accessibility.whenUnlocked
+
   enum RecipientType: String {
     case se = "se"
     case tag = "tag"
@@ -137,7 +151,7 @@ struct Options {
   static let help =
     """
     Usage:
-      age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--recipient-type RECIPIENT_TYPE]
+      age-plugin-se keygen [--pq] [-o OUTPUT] [--access-control ACCESS_CONTROL] [--accessibility ACCESSIBILITY] [--recipient-type RECIPIENT_TYPE]
       age-plugin-se recipients [--pq] [-o OUTPUT] [-i INPUT] [--recipient-type RECIPIENT_TYPE]
 
     Description:
@@ -161,6 +175,19 @@ struct Options {
                                           any-biometry-or-passcode, current-biometry, 
                                           current-biometry-and-passcode
                                         Default: any-biometry-or-passcode.                          
+
+      --accessibility ACCESSIBILITY     When the generated key can be used.
+
+                                        `when-unlocked` refuses while the screen
+                                        is locked. `after-first-unlock` works while
+                                        the screen is locked, once the device has
+                                        been unlocked one time since boot. Use it
+                                        for unattended jobs, with access control
+                                        `none`.
+
+                                        Supported values: when-unlocked,
+                                          after-first-unlock
+                                        Default: when-unlocked.
 
       -i, --input INPUT                 Read data from the file at path INPUT
 
@@ -206,7 +233,8 @@ struct Options {
       } else if ["--pq"].contains(arg) {
         opts.pq = true
       } else if [
-        "--age-plugin", "-i", "--input", "-o", "--output", "--access-control", "--recipient-type",
+        "--age-plugin", "-i", "--input", "-o", "--output", "--access-control", "--accessibility",
+        "--recipient-type",
       ].contains(where: {
         arg == $0 || arg.hasPrefix($0 + "=")
       }) {
@@ -233,6 +261,9 @@ struct Options {
         case "--access-control":
           opts.accessControl =
             try AccessControl(rawValue: value) ?? { throw Error.invalidValue(arg, value) }()
+        case "--accessibility":
+          opts.accessibility =
+            try Accessibility(rawValue: value) ?? { throw Error.invalidValue(arg, value) }()
         case "--recipient-type":
           opts.recipientType =
             try RecipientType(rawValue: value) ?? { throw Error.invalidValue(arg, value) }()

@@ -145,6 +145,22 @@ final class GenerateKeyTests: XCTestCase {
       "age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4", result.1)
   }
 
+  func testGenerate_AfterFirstUnlock() throws {
+    let plugin = Plugin(crypto: crypto, stream: stream)
+    let result = try plugin.generateKey(
+      accessControl: .none, accessibility: .afterFirstUnlock, recipientType: .se,
+      now: Date(timeIntervalSinceReferenceDate: -123456789.0))
+    XCTAssertEqual(
+      """
+      # created: 1997-02-02T02:26:51Z
+      # access control: none
+      # accessibility: after first unlock
+      # public key: age1se1qvlvs7x2g83gtaqg0dlstnm3ee8tr49dhtdnxudpfd0sy2gedw20kjmseq4
+      AGE-PLUGIN-SE-1XAJERWKUTH2YWAYH3F32SZKGMGPFSJF3HWJ7Z0Q9SP4JEDTMVG6Q6JD2VG
+
+      """, result.0)
+  }
+
   func testGenerate_AnyBiometryAndPasscode() throws {
     let plugin = Plugin(crypto: crypto, stream: stream)
     let result = try plugin.generateKey(

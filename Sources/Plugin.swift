@@ -16,7 +16,8 @@ class Plugin {
   }
 
   func generateKey(
-    accessControl: KeyAccessControl, recipientType: RecipientType, now: Date, pq: Bool = false
+    accessControl: KeyAccessControl, accessibility: KeyAccessibility = .whenUnlocked,
+    recipientType: RecipientType, now: Date, pq: Bool = false
   ) throws -> (String, String) {
     if !crypto.isSecureEnclaveAvailable {
       throw Error.seUnsupported
@@ -42,10 +43,15 @@ class Plugin {
       if accessControl == .anyBiometryOrPasscode {
         accessControlFlags.insert(.userPresence)
       }
+      let protection: CFString
+      switch accessibility {
+      case .whenUnlocked: protection = kSecAttrAccessibleWhenUnlockedThisDeviceOnly
+      case .afterFirstUnlock: protection = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+      }
       var error: Unmanaged<CFError>?
       guard
         let secAccessControl = SecAccessControlCreateWithFlags(
-          kCFAllocatorDefault, kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+          kCFAllocatorDefault, protection,
           accessControlFlags,
           &error)
       else {
@@ -67,6 +73,13 @@ class Plugin {
     case .currentBiometryAndPasscode: accessControlStr = "current biometry and passcode"
     }
 
+    // The default class adds no line, so existing identity files keep their exact shape.
+    let accessibilityStr: String
+    switch accessibility {
+    case .whenUnlocked: accessibilityStr = ""
+    case .afterFirstUnlock: accessibilityStr = "\n# accessibility: after first unlock"
+    }
+
     let ageRecipient: String
     var recipientsStr = "# public key: \(identity.recipient.ageRecipient(type: recipientType))"
     if pq {
@@ -78,7 +91,7 @@ class Plugin {
 
     let contents = """
       # created: \(createdAt)
-      # access control: \(accessControlStr)
+      # access control: \(accessControlStr)\(accessibilityStr)
       \(recipientsStr)
       \(identity.ageIdentity)
 
@@ -503,6 +516,15 @@ enum KeyAccessControl {
   case anyBiometryAndPasscode
   case currentBiometry
   case currentBiometryAndPasscode
+}
+
+/// When the Secure Enclave lets the key be used.
+/// `whenUnlocked` (the default) refuses while the screen is locked.
+/// `afterFirstUnlock` works while locked, once the user has unlocked the device
+/// one time since boot.
+enum KeyAccessibility {
+  case whenUnlocked
+  case afterFirstUnlock
 }
 
 enum RecipientType: String {
